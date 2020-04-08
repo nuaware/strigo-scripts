@@ -98,7 +98,14 @@ def getMyWorkspaceIPs( eventId ):
     #return res.json()
     return ( None, None )
 
+def getMyNodeIndex( eventId ):
+    ( workspacePrivateIps, workspacePublicIps ) = \
+        getMyWorkspaceIPs( eventId )
 
+    for idx in range(len(workspacePrivateIps)):
+        private_ip = workspacePrivateIps[idx]
+        if private_ip == PRIVATE_IP:
+            return idx
 
 while len(sys.argv) > 1:
     arg=sys.argv[1]; sys.argv=sys.argv[2:]
@@ -129,4 +136,9 @@ while len(sys.argv) > 1:
 
 
 
+    if arg == '-idx':
+        eventId = getMyEventId( OWNER_ID_OR_EMAIL, status='live' )
+        if VERBOSE: print(f"eventId={eventId}")
+        idx = getMyNodeIndex( eventId )
+        print(idx)
 
