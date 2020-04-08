@@ -66,7 +66,7 @@ GET_EVENTS() {
 
 KUBEADM_INIT() { # USE $POD_CIDR
     #kubeadm init --kubernetes-version=$K8S_RELEASE --pod-network-cidr=$POD_CIDR --apiserver-cert-extra-sans=__MASTER1_IP__ | tee kubeadm-init.out
-    NODE_NAME="master"
+    export NODE_NAME="master"
     kubeadm init --node-name $NODE_NAME --pod-network-cidr=$POD_CIDR \
                  --apiserver-cert-extra-sans=$PUBLIC_IP | \
         tee kubeadm-init.out
@@ -82,17 +82,17 @@ KUBEADM_JOIN() {
     let WORKER_NUM=NUM_NODES-NUM_MASTERS
     for WORKER in $(seq $WORKER_NUM); do
         let NODE_NUM=NUM_MASTERS+WORKER-1
-        NODE_NAME="worker$WORKER"
+        WORKER_NODE_NAME="worker$WORKER"
 
         WORKER_IPS=$($SCRIPT_DIR/get_workspaces_info.py -ips $NODE_NUM)
-        PRIVATE_IP=${WORKER_IPS%,*};
-        PUBLIC_IP=${WORKER_IPS#*,};
+        WORKER_PRIVATE_IP=${WORKER_IPS%,*};
+        WORKER_PUBLIC_IP=${WORKER_IPS#*,};
 
-    echo "WORKER[$WORKER]=NODE[$NODE_NUM] PRIVATE_IP=$PRIVATE_IP PUBLIC_IP=$PUBLIC_IP"
+        echo "WORKER[$WORKER]=NODE[$NODE_NUM] PRIVATE_IP=$PRIVATE_IP PUBLIC_IP=$PUBLIC_IP"
 
-        while ! sudo -u ubuntu ssh -o StrictHostKeyChecking=no $PRIVATE_IP uptime; do sleep 2; echo "Waiting for successful Worker$WORKER ssh conection ..."; done
+        while ! sudo -u ubuntu ssh -o StrictHostKeyChecking=no $PRIVATE_IP bash -c "echo $WORKER_NODE_NAME | tee /tmp/NODE_NAME"; do sleep 2; echo "Waiting for successful Worker$WORKER ssh conection ..."; done
 
-        CMD="sudo -u ubuntu ssh $PRIVATE_IP sudo $JOIN_COMMAND --node-name $NODE_NAME"
+        CMD="sudo -u ubuntu ssh $WORKER_PRIVATE_IP sudo $JOIN_COMMAND --node-name $WORKER_NODE_NAME"
         echo "-- $CMD"
         $CMD
     done
@@ -196,6 +196,9 @@ if [ $NODE_IDX -eq 0 ] ; then
     SECTION KUBEADM_JOIN
     SECTION KUBECTL_VERSION
     [ $INSTALL_KUBELAB -ne 0 ] && SECTION INSTALL_KUBELAB
+else
+    while [ ! -f /tmp/NODE_NAME ]; do sleep 5; done
+    NODE_NAME=$(cat /tmp/NODE_NAME)
 fi
 
 [ ! -z "$REGISTER_URL" ] && SECTION REGISTER_INSTALL
