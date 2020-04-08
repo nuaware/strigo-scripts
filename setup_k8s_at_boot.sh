@@ -1,11 +1,11 @@
 #!/bin/bash
 
-exec > /tmp/user-data.op 2>&1
-
-env
-
 CNI_YAMLS="https://docs.projectcalico.org/manifests/calico.yaml"
 POD_CIDR="192.168.0.0/16"
+
+#export PRIVATE_IP=$(hostname -i)
+export PRIVATE_IP=$(ec2metadata --local-ipv4)
+export PUBLIC_IP=$(ec2metadata --public-ipv4)
 
 apt-get update && apt-get install -y jq
 
@@ -20,7 +20,7 @@ START_DOCKER_plus() {
     docker ps
 
     groupadd docker
-    usermod -aG docker $USER
+    usermod -aG docker ubuntu
     sudo -u ubuntu docker ps
     #newgrp docker
 }
@@ -53,7 +53,7 @@ CNI_INSTALL() {
     export KUBECONFIG=/etc/kubernetes/admin.conf
     kubectl get nodes
 
-    for CNI_YAML in CNI_YAMLS; do
+    for CNI_YAML in $CNI_YAMLS; do
         kubectl create -f $CNI_YAML
     done
     kubectl get nodes
