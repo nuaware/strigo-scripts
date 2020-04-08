@@ -31,13 +31,17 @@ SCRIPT_DIR=$(dirname $0)
 
 echo "Checking for Events owned by '$OWNER_ID_OR_EMAIL'"
 
-NODE_IDX=$($SCRIPT_DIR/get_workspaces_info.py -idx)
-EVENT=$($SCRIPT_DIR/get_workspaces_info.py -e)
-[ "$EVENT" = "None" ] && { echo "DEBUG: env= ------------------------ "; env; echo "--------------------------------"; }
-#WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -W | sed -e 's/  */_/g')
-WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -w)
 
-[ -z "$NODE_IDX"  ] && ERROR "NODE_IDX is unset"P
+set_EVENT_WORKSPACE() {
+    NODE_IDX=$($SCRIPT_DIR/get_workspaces_info.py -idx)
+
+    EVENT=$($SCRIPT_DIR/get_workspaces_info.py -e)
+    [ "$EVENT" = "None" ] && { echo "DEBUG: env= ------------------------ "; env; echo "--------------------------------"; sleep 30; }
+    #WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -W | sed -e 's/  */_/g')
+    WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -w)
+}
+set_EVENT_WORKSPACE
+
 NUM_MASTERS=1
 
 apt-get update && apt-get install -y jq
@@ -118,15 +122,19 @@ CNI_INSTALL() {
 }
 
 SETUP_KUBECONFIG() {
-    export KUBECONFIG=/etc/kubernetes/admin.conf
-
-    mkdir -p /home/ubuntu/.kube
-    cp -a $KUBECONFIG /home/ubuntu/.kube/config
-    chown -R ubuntu:ubuntu /home/ubuntu/.kube
+    #export KUBECONFIG=/etc/kubernetes/admin.conf
+    export ADMIN_KUBECONFIG=/etc/kubernetes/admin.conf
 
     mkdir -p /root/.kube
-    cp -a $KUBECONFIG /root/.kube/config
+    cp -a $ADMIN_KUBECONFIG /root/.kube/config
+    echo "root: kubectl get nodes:"
+    kubectl get nodes
 
+    mkdir -p /home/ubuntu/.kube
+    cp -a $ADMIN_KUBECONFIG /home/ubuntu/.kube/config
+    chown -R ubuntu:ubuntu /home/ubuntu/.kube
+
+    echo "ubuntu: kubectl get nodes:"
     #sudo -u ubuntu KUBECONFIG=/home/ubuntu/.kube/config kubectl get nodes
     sudo -u ubuntu kubectl get nodes
 }
@@ -177,6 +185,9 @@ SECTION() {
 
 SECTION START_DOCKER_plus
 # SECTION GET_LAB_RESOURCES - CAREFUL THIS WILL EXPOSE YOUR API_KEY/ORG_ID
+
+set_EVENT_WORKSPACE
+[ -z "$NODE_IDX"  ] && ERROR "NODE_IDX is unset"
 
 # Perform all kubeadm operations from Master1:
 if [ $NODE_IDX -eq 0 ] ; then
