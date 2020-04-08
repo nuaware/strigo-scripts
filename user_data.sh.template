@@ -14,8 +14,11 @@ export API_KEY="__API_KEY__"
 
 BOOT_SETUP_SH=setup_k8s_at_boot.sh
 
-wget -O $DIR/$BOOT_SETUP_SH         RAW_GIT_ADDRESS
-wget -O $DIR/get_workspaces_info.py RAW_GIT_ADDRESS
+wget -O $DIR/$BOOT_SETUP_SH \
+    https://raw.githubusercontent.com/mjbright/strigo-scripts/master/setup_k8s_at_boot.sh
+
+wget -O $DIR/get_workspaces_info.py \
+    https://raw.githubusercontent.com/mjbright/strigo-scripts/master/get_workspaces_info.py
 
 chmod +x $DIR/$BOOT_SETUP_SH
 chmod +x $DIR/get_workspaces_info.py
