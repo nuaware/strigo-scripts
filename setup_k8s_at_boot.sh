@@ -3,6 +3,9 @@
 CNI_YAMLS="https://docs.projectcalico.org/manifests/calico.yaml"
 POD_CIDR="192.168.0.0/16"
 
+# TOODL move to user-data:
+INSTALL_KUBELAB=1
+
 ERROR() {
     echo "******************************************************"
     echo "** ERROR: $*"
@@ -125,11 +128,21 @@ KUBECTL_VERSION() {
     kubectl version -o yaml
 }
 
-CLONE_KUBELAB() {
+INSTALL_KUBELAB() {
     mkdir -p /root/github.com
     git clone https://github.com/mjbright/kubelab /root/github.com/kubelab
 
     cat > /tmp/kubelab.sh << EOF
+
+# Create modified config.kubelab
+# - needed so kubectl in cluster will use 'default' namespace not 'kubelab':
+#
+# TODO: add note in kubelab/README.md
+# TODO: Match on/modify after context name
+sed -e '/user: kubernetes-admin/a \ \ \ \ namespace: default' < /home/ubuntu/.kube/config  > /home/ubuntu/.kube/config.kubelab
+
+# Mount new kubeconfig as a ConfigMap/file:
+kubectl -n kubelab create configmap kube-configmap --from-file=/home/ubuntu/.kube/config.kubelab
 
 kubectl create -f /root/github.com/kubelab/kubelab.yaml
 
@@ -157,7 +170,7 @@ if [ $NODE_IDX -eq 0 ] ; then
     SECTION CNI_INSTALL
     SECTION KUBEADM_JOIN
     SECTION KUBECTL_VERSION
-    SECTION CLONE_KUBELAB
+    [ $INSTALL_KUBELAB -ne 0 ] && SECTION INSTALL_KUBELAB
 fi
 
 
