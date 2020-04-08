@@ -130,17 +130,20 @@ while len(sys.argv) > 0:
 
     if arg == '-e':
         eventId = getMyEventId( OWNER_ID_OR_EMAIL, status='live' )
-        print(f"eventId={eventId}")
+        #print(f"eventId={eventId}")
+        print(eventId)
 
     if arg == '-W':
         eventId = getMyEventId( OWNER_ID_OR_EMAIL, status='live' )
-        print(f"eventId={eventId}")
+        if VERBOSE: print(f"eventId={eventId}")
         workspaces = getEventWorkspaces( eventId )
+        if VERBOSE: print(f"workspaces={workspaces}")
         for w in workspaces['data']:
             print(w['id'])
 
     if arg == '-w':
         eventId = getMyEventId( OWNER_ID_OR_EMAIL, status='live' )
+        if VERBOSE: print(f"eventId={eventId}")
         ( workspaceId, workspacePrivateIps, workspacePublicIps ) = \
             getMyWorkspaceIPs( eventId )
         print(workspaceId)
