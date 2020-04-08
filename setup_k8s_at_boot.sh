@@ -9,7 +9,9 @@ export PUBLIC_IP=$(ec2metadata --public-ipv4)
 
 SCRIPT_DIR=$(dirname $0)
 
+set -x
 NODE_IDX=$($SCRIPT_DIR/get_workspaces_info.py -idx)
+set +x
 NUM_MASTERS=1
 
 apt-get update && apt-get install -y jq
@@ -47,7 +49,9 @@ KUBEADM_INIT() { # USE $POD_CIDR
 
 KUBEADM_JOIN() {
 
-    NUM_NODES=$($SCRIPT_DIR/get_workspaces_info.py -nodes)
+    set -x
+        NUM_NODES=$($SCRIPT_DIR/get_workspaces_info.py -nodes)
+    set +x
 
     JOIN_COMMAND=$(kubeadm token create --print-join-command)
 
@@ -55,7 +59,9 @@ KUBEADM_JOIN() {
     for WORKER in $(seq WORKER_NUM):
         let NODE_NUM=NUM_MASTERS+WORKER
 
-        WORKER_IPS=$($SCRIPT_DIR/get_workspaces_info.py -ips $NODE_NUM)
+        set -x
+            WORKER_IPS=$($SCRIPT_DIR/get_workspaces_info.py -ips $NODE_NUM)
+        set +x
 	PRIVATE_IP=${WORKER_IPS%,*};
 	PUBLIC_IP=${WORKER_IPS#*,};
 
