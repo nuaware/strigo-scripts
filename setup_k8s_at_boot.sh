@@ -22,6 +22,7 @@ ERROR() {
 #export PRIVATE_IP=$(hostname -i)
 export PRIVATE_IP=$(ec2metadata --local-ipv4)
 export PUBLIC_IP=$(ec2metadata --public-ipv4)
+export NODE_NAME="unset"
 
 [ -z "$PRIVATE_IP" ] && ERROR "PRIVATE_IP is unset"P
 [ -z "$PUBLIC_IP"  ] && ERROR "PUBLIC_IP is unset"P
@@ -32,6 +33,10 @@ echo "Checking for Events owned by '$OWNER_ID_OR_EMAIL'"
 
 set -x
 NODE_IDX=$($SCRIPT_DIR/get_workspaces_info.py -idx)
+EVENT=$($SCRIPT_DIR/get_workspaces_info.py -e)
+#WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -w)
+WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -w | grep workspaces= | sed -e "s/.*\[.'id': '//" -e "s/',.*//")
+
 set +x
 [ -z "$NODE_IDX"  ] && ERROR "NODE_IDX is unset"P
 NUM_MASTERS=1
@@ -69,7 +74,8 @@ GET_EVENTS() {
 
 KUBEADM_INIT() { # USE $POD_CIDR
     #kubeadm init --kubernetes-version=$K8S_RELEASE --pod-network-cidr=$POD_CIDR --apiserver-cert-extra-sans=__MASTER1_IP__ | tee kubeadm-init.out
-    kubeadm init --node-name master --pod-network-cidr=$POD_CIDR \
+    NODE_NAME="master"
+    kubeadm init --node-name $NODE_NAME --pod-network-cidr=$POD_CIDR \
 	         --apiserver-cert-extra-sans=$PUBLIC_IP | \
         tee kubeadm-init.out
     #kubeadm init | tee /tmp/kubeadm-init.out
@@ -86,7 +92,7 @@ KUBEADM_JOIN() {
     let WORKER_NUM=NUM_NODES-NUM_MASTERS
     for WORKER in $(seq $WORKER_NUM); do
         let NODE_NUM=NUM_MASTERS+WORKER-1
-        WORKER_NAME="worker$WORKER"
+        NODE_NAME="worker$WORKER"
 
         set -x
             WORKER_IPS=$($SCRIPT_DIR/get_workspaces_info.py -ips $NODE_NUM)
@@ -98,7 +104,7 @@ KUBEADM_JOIN() {
 
         while ! sudo -u ubuntu ssh -o StrictHostKeyChecking=no $PRIVATE_IP uptime; do sleep 2; echo "Waiting for successful Worker$WORKER ssh conection ..."; done
 
-        CMD="sudo -u ubuntu ssh $PRIVATE_IP sudo $JOIN_COMMAND --node-name $WORKER_NAME"
+        CMD="sudo -u ubuntu ssh $PRIVATE_IP sudo $JOIN_COMMAND --node-name $NODE_NAME"
 	echo "-- $CMD"
 	$CMD
     done
@@ -122,6 +128,9 @@ SETUP_KUBECONFIG() {
     mkdir -p /home/ubuntu/.kube
     cp -a $KUBECONFIG /home/ubuntu/.kube/config
     chown -R ubuntu:ubuntu /home/ubuntu/.kube
+
+    mkdir -p /root/.kube
+    cp -a $KUBECONFIG /root/.kube/config
 
     #sudo -u ubuntu KUBECONFIG=/home/ubuntu/.kube/config kubectl get nodes
     sudo -u ubuntu kubectl get nodes
@@ -179,5 +188,9 @@ if [ $NODE_IDX -eq 0 ] ; then
     SECTION KUBECTL_VERSION
     [ $INSTALL_KUBELAB -ne 0 ] && SECTION INSTALL_KUBELAB
 fi
+
+[ ! -z "$REGISTER_URL" ] && {
+    wget -qO - $REGISTER_URL/${EVENT}_${WORKSPACE}_${NODE_NAME}_${PUBLIC_IP}
+}
 
 
