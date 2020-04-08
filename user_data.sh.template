@@ -15,10 +15,10 @@ export OWNER_ID_OR_EMAIL="__OWNER_ID_OR_EMAIL__"
 
 BOOT_SETUP_SH=setup_k8s_at_boot.sh
 
-wget -O $DIR/$BOOT_SETUP_SH \
+wget -qO $DIR/$BOOT_SETUP_SH \
     https://raw.githubusercontent.com/mjbright/strigo-scripts/master/setup_k8s_at_boot.sh
 
-wget -O $DIR/get_workspaces_info.py \
+wget -qO $DIR/get_workspaces_info.py \
     https://raw.githubusercontent.com/mjbright/strigo-scripts/master/get_workspaces_info.py
 
 chmod +x $DIR/$BOOT_SETUP_SH
