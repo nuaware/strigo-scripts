@@ -33,6 +33,7 @@ echo "Checking for Events owned by '$OWNER_ID_OR_EMAIL'"
 
 NODE_IDX=$($SCRIPT_DIR/get_workspaces_info.py -idx)
 EVENT=$($SCRIPT_DIR/get_workspaces_info.py -e)
+[ "$EVENT" = "None" ] && { echo "DEBUG: env= ------------------------ "; env; echo "--------------------------------"; }
 #WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -W | sed -e 's/  */_/g')
 WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -w)
 
