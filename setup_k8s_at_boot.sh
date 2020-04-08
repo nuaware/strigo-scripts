@@ -87,7 +87,9 @@ KUBEADM_JOIN() {
 
 	echo "WORKER[$WORKER]=NODE[$NODE_NUM] PRIVATE_IP=$PRIVATE_IP PUBLIC_IP=$PUBLIC_IP"
 
-        CMD="sudo -u ubuntu ssh $PRIVATE_IP $JOIN_COMMAND"
+        while ! sudo -u ubuntu ssh -o StrictHostKeyChecking=no $PRIVATE_IP uptime; do sleep 2; echo "Waiting for successful Worker$WORKER ssh conection ..."; done
+
+        CMD="sudo -u ubuntu ssh $PRIVATE_IP sudo $JOIN_COMMAND"
 	echo "-- $CMD"
 	$CMD
     done
