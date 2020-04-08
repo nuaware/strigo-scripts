@@ -80,7 +80,6 @@ KUBEADM_JOIN() {
 }
 
 CNI_INSTALL() {
-    export KUBECONFIG=/etc/kubernetes/admin.conf
     kubectl get nodes
 
     for CNI_YAML in $CNI_YAMLS; do
@@ -93,6 +92,7 @@ CNI_INSTALL() {
 }
 
 SETUP_KUBECONFIG() {
+    export KUBECONFIG=/etc/kubernetes/admin.conf
 
     mkdir -p /home/ubuntu/.kube
     cp -a $KUBECONFIG /home/ubuntu/.kube/config
@@ -100,6 +100,10 @@ SETUP_KUBECONFIG() {
 
     #sudo -u ubuntu KUBECONFIG=/home/ubuntu/.kube/config kubectl get nodes
     sudo -u ubuntu kubectl get nodes
+}
+
+KUBECTL_VERSION() {
+    kubectl version -o yaml
 }
 
 SECTION() {
@@ -115,10 +119,10 @@ SECTION START_DOCKER_plus
 # Perform all kubeadm operations from Master1:
 if [ $NODE_IDX -eq 0 ] ; then
     SECTION KUBEADM_INIT
+    SECTION SETUP_KUBECONFIG
     SECTION CNI_INSTALL
     SECTION KUBEADM_JOIN
-    SECTION SETUP_KUBECONFIG
-    kubectl version -o yaml
+    SECTION KUBECTL_VERSION
 fi
 
 
