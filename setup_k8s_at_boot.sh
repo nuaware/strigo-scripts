@@ -31,7 +31,6 @@ SCRIPT_DIR=$(dirname $0)
 
 echo "Checking for Events owned by '$OWNER_ID_OR_EMAIL'"
 
-set -x
 NODE_IDX=$($SCRIPT_DIR/get_workspaces_info.py -idx)
 EVENT=$($SCRIPT_DIR/get_workspaces_info.py -e)
 WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -w | sed -e 's/  */_/g')
@@ -82,9 +81,7 @@ KUBEADM_INIT() { # USE $POD_CIDR
 
 KUBEADM_JOIN() {
 
-    set -x
-        NUM_NODES=$($SCRIPT_DIR/get_workspaces_info.py -nodes)
-    set +x
+    NUM_NODES=$($SCRIPT_DIR/get_workspaces_info.py -nodes)
 
     JOIN_COMMAND=$(kubeadm token create --print-join-command)
 
@@ -93,9 +90,7 @@ KUBEADM_JOIN() {
         let NODE_NUM=NUM_MASTERS+WORKER-1
         NODE_NAME="worker$WORKER"
 
-        set -x
-            WORKER_IPS=$($SCRIPT_DIR/get_workspaces_info.py -ips $NODE_NUM)
-        set +x
+        WORKER_IPS=$($SCRIPT_DIR/get_workspaces_info.py -ips $NODE_NUM)
 	PRIVATE_IP=${WORKER_IPS%,*};
 	PUBLIC_IP=${WORKER_IPS#*,};
 
