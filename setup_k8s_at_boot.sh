@@ -63,7 +63,7 @@ KUBEADM_JOIN() {
 
     let WORKER_NUM=NUM_NODES-NUM_MASTERS
     for WORKER in $(seq $WORKER_NUM); do
-        let NODE_NUM=NUM_MASTERS+WORKER
+        let NODE_NUM=NUM_MASTERS+WORKER-1
 
         set -x
             WORKER_IPS=$($SCRIPT_DIR/get_workspaces_info.py -ips $NODE_NUM)
