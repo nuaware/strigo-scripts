@@ -34,8 +34,7 @@ echo "Checking for Events owned by '$OWNER_ID_OR_EMAIL'"
 set -x
 NODE_IDX=$($SCRIPT_DIR/get_workspaces_info.py -idx)
 EVENT=$($SCRIPT_DIR/get_workspaces_info.py -e)
-#WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -w)
-WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -w | grep workspaces= | sed -e "s/.*\[.'id': '//" -e "s/',.*//")
+WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -w | sed -e 's/  */_/g')
 
 set +x
 [ -z "$NODE_IDX"  ] && ERROR "NODE_IDX is unset"P
