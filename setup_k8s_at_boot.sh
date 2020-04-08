@@ -26,16 +26,20 @@ id -un
 START_DOCKER_plus() {
     systemctl start docker
     systemctl enable docker
+    echo "root: docker ps"
     docker ps
 
     groupadd docker
     usermod -aG docker ubuntu
+    echo "ubuntu: docker ps"
     sudo -u ubuntu docker ps
+    echo "ubuntu: docker version"
+    sudo -i docker version
     #newgrp docker
 }
 
-#TODO: SET #- MASTER1 #- WORKER1
 GET_LAB_RESOURCES() {
+    # CAREFUL THIS WILL EXPOSE YOUR API_KEY/ORG_ID
     curl -H "Authorization: Bearer ${ORG_ID}:${API_KEY}" -H "Accept: application/json" -H "Content-Type: application/json" "https://app.strigo.io/api/v1/classes/${CLASSID}/resources" | jq . | tee /tmp/LAB_RESOURCES.json
 }
 
@@ -58,7 +62,7 @@ KUBEADM_JOIN() {
     JOIN_COMMAND=$(kubeadm token create --print-join-command)
 
     let WORKER_NUM=NUM_NODES-NUM_MASTERS
-    for WORKER in $(seq WORKER_NUM); do
+    for WORKER in $(seq $WORKER_NUM); do
         let NODE_NUM=NUM_MASTERS+WORKER
 
         set -x
@@ -106,7 +110,7 @@ SECTION() {
 }
 
 SECTION START_DOCKER_plus
-SECTION GET_LAB_RESOURCES
+# SECTION GET_LAB_RESOURCES - CAREFUL THIS WILL EXPOSE YOUR API_KEY/ORG_ID
 
 # Perform all kubeadm operations from Master1:
 if [ $NODE_IDX -eq 0 ] ; then
@@ -114,5 +118,7 @@ if [ $NODE_IDX -eq 0 ] ; then
     SECTION CNI_INSTALL
     SECTION KUBEADM_JOIN
     SECTION SETUP_KUBECONFIG
+    kubectl version -o yaml
 fi
+
 
