@@ -107,11 +107,19 @@ def getMyNodeIndex( eventId ):
         if private_ip == PRIVATE_IP:
             return idx
 
-while len(sys.argv) > 1:
-    arg=sys.argv[1]; sys.argv=sys.argv[2:]
+    return -1
+
+# Shift off 'prog' argument:
+prog=sys.argv[0]; sys.argv=sys.argv[1:]
+
+while len(sys.argv) > 0:
+    arg=sys.argv[0]; sys.argv=sys.argv[1:]
+
+    if arg == '-v':
+        VERBOSE=True
 
     if arg == '-o':
-        arg=sys.argv[1]; sys.argv=sys.argv[2:]
+        arg=sys.argv[0]; sys.argv=sys.argv[1:]
         OWNER_ID_OR_EMAIL=arg
 
     if arg == '-e':
@@ -129,12 +137,14 @@ while len(sys.argv) > 1:
         if VERBOSE: print(f"eventId={eventId}")
         ( workspacePrivateIps, workspacePublicIps ) = \
             getMyWorkspaceIPs( eventId )
+
+        if len(sys.argv) > 0:
+            idx=int(sys.argv[0])
+            print(f"{workspacePrivateIps[idx]},{workspacePublicIps[idx]}")
+            sys.exit(0)
+
         print( workspacePrivateIps, workspacePublicIps )
-
-    if arg == '-idx':
-        print(f"idx={idx}")
-
-
+        sys.exit(0)
 
     if arg == '-idx':
         eventId = getMyEventId( OWNER_ID_OR_EMAIL, status='live' )
