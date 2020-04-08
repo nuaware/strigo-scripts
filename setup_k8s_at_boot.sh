@@ -33,9 +33,9 @@ echo "Checking for Events owned by '$OWNER_ID_OR_EMAIL'"
 
 NODE_IDX=$($SCRIPT_DIR/get_workspaces_info.py -idx)
 EVENT=$($SCRIPT_DIR/get_workspaces_info.py -e)
-WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -w | sed -e 's/  */_/g')
+#WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -W | sed -e 's/  */_/g')
+WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -w)
 
-set +x
 [ -z "$NODE_IDX"  ] && ERROR "NODE_IDX is unset"P
 NUM_MASTERS=1
 
@@ -163,6 +163,10 @@ EOF
     /tmp/kubelab.sh
 }
 
+SECTION REGISTER_INSTALL() {
+    wget -qO - "$REGISTER_URL/${EVENT}_${WORKSPACE}_${NODE_NAME}_${PUBLIC_IP}"
+}
+
 SECTION() {
     SECTION="$*"
 
@@ -183,8 +187,7 @@ if [ $NODE_IDX -eq 0 ] ; then
     [ $INSTALL_KUBELAB -ne 0 ] && SECTION INSTALL_KUBELAB
 fi
 
-[ ! -z "$REGISTER_URL" ] && {
-    wget -qO - $REGISTER_URL/${EVENT}_${WORKSPACE}_${NODE_NAME}_${PUBLIC_IP}
-}
+[ ! -z "$REGISTER_URL" ] && SECTION REGISTER_INSTALL
+
 
 
