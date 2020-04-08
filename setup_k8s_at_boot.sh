@@ -87,7 +87,7 @@ KUBEADM_JOIN() {
 
 	echo "WORKER[$WORKER]=NODE[$NODE_NUM] PRIVATE_IP=$PRIVATE_IP PUBLIC_IP=$PUBLIC_IP"
 
-        CMD="sudo -u ubuntu ssh $PRIVATE_OP $JOIN_COMMAND"
+        CMD="sudo -u ubuntu ssh $PRIVATE_IP $JOIN_COMMAND"
 	echo "-- $CMD"
 	$CMD
     done
