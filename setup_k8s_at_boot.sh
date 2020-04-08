@@ -9,6 +9,8 @@ export PUBLIC_IP=$(ec2metadata --public-ipv4)
 
 SCRIPT_DIR=$(dirname $0)
 
+echo "Checking for Events owned by '$OWNER_ID_OR_EMAIL'"
+
 set -x
 NODE_IDX=$($SCRIPT_DIR/get_workspaces_info.py -idx)
 set +x
@@ -56,7 +58,7 @@ KUBEADM_JOIN() {
     JOIN_COMMAND=$(kubeadm token create --print-join-command)
 
     let WORKER_NUM=NUM_NODES-NUM_MASTERS
-    for WORKER in $(seq WORKER_NUM):
+    for WORKER in $(seq WORKER_NUM); do
         let NODE_NUM=NUM_MASTERS+WORKER
 
         set -x
