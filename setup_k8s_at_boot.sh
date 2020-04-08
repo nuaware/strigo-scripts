@@ -122,6 +122,21 @@ KUBECTL_VERSION() {
     kubectl version -o yaml
 }
 
+CLONE_KUBELAB() {
+    mkdir -p /root/github.com
+    git clone https://github.com/mjbright/kubelab /root/github.com/kubelab
+
+    cat > /tmp/kubelab.sh << EOF
+
+kubectl create -f /root/github.com/kubelab/kubelab.yaml
+
+EOF
+
+    chmod +x /tmp/kubelab.sh
+
+    cd -
+}
+
 SECTION() {
     SECTION="$*"
 
@@ -139,6 +154,7 @@ if [ $NODE_IDX -eq 0 ] ; then
     SECTION CNI_INSTALL
     SECTION KUBEADM_JOIN
     SECTION KUBECTL_VERSION
+    SECTION CLONE_KUBELAB
 fi
 
 
