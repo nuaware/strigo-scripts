@@ -6,6 +6,9 @@ POD_CIDR="192.168.0.0/16"
 # TOODL move to user-data:
 INSTALL_KUBELAB=1
 
+echo export HOME=/root >> /root/.profile
+export HOME=/root
+
 ERROR() {
     echo "******************************************************"
     echo "** ERROR: $*"
@@ -139,7 +142,11 @@ INSTALL_KUBELAB() {
 #
 # TODO: add note in kubelab/README.md
 # TODO: Match on/modify after context name
+
+export KUBECONFIG=/etc/kubernetes/admin.conf
+
 sed -e '/user: kubernetes-admin/a \ \ \ \ namespace: default' < /home/ubuntu/.kube/config  > /home/ubuntu/.kube/config.kubelab
+chown ubuntu:ubuntu /home/ubuntu/.kube/config.kubelab
 
 # Mount new kubeconfig as a ConfigMap/file:
 kubectl -n kubelab create configmap kube-configmap --from-file=/home/ubuntu/.kube/config.kubelab
@@ -149,8 +156,7 @@ kubectl create -f /root/github.com/kubelab/kubelab.yaml
 EOF
 
     chmod +x /tmp/kubelab.sh
-
-    cd -
+    /tmp/kubelab.sh
 }
 
 SECTION() {
