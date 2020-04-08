@@ -62,7 +62,7 @@ def getEventWorkspaces( eventId ):
 
 def getMyWorkspaceIPs( eventId ):
     workspaces = getEventWorkspaces( eventId )
-    print(f"workspaces={workspaces}")
+    if VERBOSE: print(f"workspaces={workspaces}")
 
     myWorkspace=None
 
@@ -70,11 +70,11 @@ def getMyWorkspaceIPs( eventId ):
         workspaceId=ws['id']
         workspacePrivateIps=[]
         workspacePublicIps=[]
-        print(f"workspaceId={workspaceId}")
+        if VERBOSE: print(f"workspaceId={workspaceId}")
 
         url = f"https://app.strigo.io/api/v1/events/{eventId}/workspaces/{workspaceId}/resources"
         workspace = requests.get(url, headers=headers).json()
-        print(f"workspace={workspace}")
+        if VERBOSE: print(f"workspace={workspace}")
         for lab_inst in workspace['data']:
             lab_instance_id=lab_inst['id']
             private_ip=lab_inst['private_ip']
@@ -84,11 +84,12 @@ def getMyWorkspaceIPs( eventId ):
             workspacePublicIps.append(public_ip)
 
             if private_ip == PRIVATE_IP:
-                print(f"FOUND my workspace: ID={workspaceId}")
-                print(f"-- lab_instance_id={lab_instance_id}")
-                print(f"-- private_ip={private_ip}")
-                print(f"-- public_ip={public_ip}")
                 myWorkspace=workspaceId
+                if VERBOSE:
+                    print(f"FOUND my workspace: ID={workspaceId}")
+                    print(f"-- lab_instance_id={lab_instance_id}")
+                    print(f"-- private_ip={private_ip}")
+                    print(f"-- public_ip={public_ip}")
 
         if myWorkspace:
             return ( workspacePrivateIps, workspacePublicIps )
@@ -118,7 +119,7 @@ while len(sys.argv) > 1:
 
     if arg == '-ips':
         eventId = getMyEventId( OWNER_ID_OR_EMAIL, status='live' )
-        print(f"eventId={eventId}")
+        if VERBOSE: print(f"eventId={eventId}")
         ( workspacePrivateIps, workspacePublicIps ) = \
             getMyWorkspaceIPs( eventId )
         print( workspacePrivateIps, workspacePublicIps )
