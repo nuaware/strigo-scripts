@@ -31,31 +31,14 @@ SCRIPT_DIR=$(dirname $0)
 
 echo "Checking for Events owned by '$OWNER_ID_OR_EMAIL'"
 
-
 set_EVENT_WORKSPACE() {
     NODE_IDX=$($SCRIPT_DIR/get_workspaces_info.py -idx)
 
     EVENT=$($SCRIPT_DIR/get_workspaces_info.py -e)
-    [ "$EVENT" = "None" ] && {
-        echo "DEBUG: env= ------------------------ "
-        env
-        env | sed 's/^/export /' > /tmp/env.rc
-        echo "--------------------------------"
-        sleep 30;
-    }
-    #WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -W | sed -e 's/  */_/g')
+    #[ "$EVENT" = "None" ] && { echo "DEBUG: env= ------------------------ "; env; env | sed 's/^/export /' > /tmp/env.rc; echo "--------------------------------"; sleep 30; }
     WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -w)
+    #WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -W | sed -e 's/  */_/g')
 }
-set_EVENT_WORKSPACE
-
-NUM_MASTERS=1
-
-apt-get update && apt-get install -y jq
-
-id -un
-
-#ping -c 1 $LAB_Virtual_Machine_1_PRIVATE_IP #ping -c 1 $LAB_Virtual_Machine_2_PRIVATE_IP 
-#sudo -u ubuntu ssh -o StrictHostKeyChecking=no $LAB_Virtual_Machine_1_PRIVATE_IP  uptime
 
 START_DOCKER_plus() {
     systemctl start docker
@@ -189,11 +172,21 @@ SECTION() {
     $*
 }
 
+NUM_MASTERS=1
+
+apt-get update && apt-get install -y jq
+
+id -un
+
+#ping -c 1 $LAB_Virtual_Machine_1_PRIVATE_IP #ping -c 1 $LAB_Virtual_Machine_2_PRIVATE_IP 
+#sudo -u ubuntu ssh -o StrictHostKeyChecking=no $LAB_Virtual_Machine_1_PRIVATE_IP  uptime
 SECTION START_DOCKER_plus
 # SECTION GET_LAB_RESOURCES - CAREFUL THIS WILL EXPOSE YOUR API_KEY/ORG_ID
 
 set_EVENT_WORKSPACE
-[ -z "$NODE_IDX"  ] && ERROR "NODE_IDX is unset"
+[ -z "$NODE_IDX"  ] && {
+    ERROR "NODE_IDX is unset"
+}
 
 # Perform all kubeadm operations from Master1:
 if [ $NODE_IDX -eq 0 ] ; then
