@@ -163,7 +163,7 @@ EOF
     /tmp/kubelab.sh
 }
 
-SECTION REGISTER_INSTALL() {
+REGISTER_INSTALL() {
     wget -qO - "$REGISTER_URL/${EVENT}_${WORKSPACE}_${NODE_NAME}_${PUBLIC_IP}"
 }
 
