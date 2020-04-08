@@ -93,19 +93,19 @@ def getMyWorkspaceIPs( eventId ):
                     print(f"-- public_ip={public_ip}")
 
         if myWorkspace:
-            return ( workspacePrivateIps, workspacePublicIps )
+            return ( workspaceId, workspacePrivateIps, workspacePublicIps )
 
     # PRIVATE_IP=os.getenv('PRIVATE_IP')
     #return res.json()
-    return ( None, None )
+    return ( None, None, None )
 
 def getNumberOfNodes( eventId ):
-    ( workspacePrivateIps, workspacePublicIps ) = \
+    ( workspaceId, workspacePrivateIps, workspacePublicIps ) = \
         getMyWorkspaceIPs( eventId )
     return len(workspacePrivateIps)
 
 def getMyNodeIndex( eventId ):
-    ( workspacePrivateIps, workspacePublicIps ) = \
+    ( workspaceId, workspacePrivateIps, workspacePublicIps ) = \
         getMyWorkspaceIPs( eventId )
 
     for idx in range(len(workspacePrivateIps)):
@@ -132,16 +132,23 @@ while len(sys.argv) > 0:
         eventId = getMyEventId( OWNER_ID_OR_EMAIL, status='live' )
         print(f"eventId={eventId}")
 
-    if arg == '-w':
+    if arg == '-W':
         eventId = getMyEventId( OWNER_ID_OR_EMAIL, status='live' )
         print(f"eventId={eventId}")
         workspaces = getEventWorkspaces( eventId )
-        print(f"workspaces={workspaces}")
+        for w in workspaces['data']:
+            print(w['id'])
+
+    if arg == '-w':
+        eventId = getMyEventId( OWNER_ID_OR_EMAIL, status='live' )
+        ( workspaceId, workspacePrivateIps, workspacePublicIps ) = \
+            getMyWorkspaceIPs( eventId )
+        print(workspaceId)
 
     if arg == '-ips':
         eventId = getMyEventId( OWNER_ID_OR_EMAIL, status='live' )
         if VERBOSE: print(f"eventId={eventId}")
-        ( workspacePrivateIps, workspacePublicIps ) = \
+        ( workspaceId, workspacePrivateIps, workspacePublicIps ) = \
             getMyWorkspaceIPs( eventId )
 
         if len(sys.argv) > 0:
