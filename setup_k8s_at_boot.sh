@@ -149,6 +149,7 @@ sed -e '/user: kubernetes-admin/a \ \ \ \ namespace: default' < /home/ubuntu/.ku
 chown ubuntu:ubuntu /home/ubuntu/.kube/config.kubelab
 
 # Mount new kubeconfig as a ConfigMap/file:
+kubectl create ns kubelab 
 kubectl -n kubelab create configmap kube-configmap --from-file=/home/ubuntu/.kube/config.kubelab
 
 kubectl create -f /root/github.com/kubelab/kubelab.yaml
