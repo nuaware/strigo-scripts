@@ -1,2 +1,4 @@
 *.PRIVATE
 BACKUPS/
+scp_files.sh
+tmp.from.vm
