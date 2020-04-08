@@ -7,6 +7,11 @@ POD_CIDR="192.168.0.0/16"
 export PRIVATE_IP=$(ec2metadata --local-ipv4)
 export PUBLIC_IP=$(ec2metadata --public-ipv4)
 
+SCRIPT_DIR=$(dirname $0)
+
+NODE_IDX=$($SCRIPT_DIR/get_workspaces_info.py -idx)
+NUM_MASTERS=1
+
 apt-get update && apt-get install -y jq
 
 id -un
@@ -41,12 +46,25 @@ KUBEADM_INIT() { # USE $POD_CIDR
 }
 
 KUBEADM_JOIN() {
-    IP=$1
+
+    NUM_NODES=$($SCRIPT_DIR/get_workspaces_info.py -nodes)
 
     JOIN_COMMAND=$(kubeadm token create --print-join-command)
 
-    echo $JOIN_COMMAND 
-    sudo -u ubuntu ssh $WORKER1 $JOIN_COMMAND
+    let WORKER_NUM=NUM_NODES-NUM_MASTERS
+    for WORKER in $(seq WORKER_NUM):
+        let NODE_NUM=NUM_MASTERS+WORKER
+
+        WORKER_IPS=$($SCRIPT_DIR/get_workspaces_info.py -ips $NODE_NUM)
+	PRIVATE_IP=${WORKER_IPS%,*};
+	PUBLIC_IP=${WORKER_IPS#*,};
+
+	echo "WORKER[$WORKER]=NODE[$NODE_NUM] PRIVATE_IP=$PRIVATE_IP PUBLIC_IP=$PUBLIC_IP"
+
+        CMD="sudo -u ubuntu ssh $PRIVATE_OP $JOIN_COMMAND"
+	echo "-- $CMD"
+	$CMD
+    done
 }
 
 CNI_INSTALL() {
@@ -81,8 +99,12 @@ SECTION() {
 
 SECTION START_DOCKER_plus
 SECTION GET_LAB_RESOURCES
-SECTION KUBEADM_INIT
-SECTION KUBEADM_JOIN
-SECTION CNI_INSTALL
-SECTION SETUP_KUBECONFIG
+
+# Perform all kubeadm operations from Master1:
+if [ $NODE_IDX -eq 0 ] ; then
+    SECTION KUBEADM_INIT
+    SECTION CNI_INSTALL
+    SECTION KUBEADM_JOIN
+    SECTION SETUP_KUBECONFIG
+fi
 
