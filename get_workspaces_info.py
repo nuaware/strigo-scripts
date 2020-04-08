@@ -79,6 +79,7 @@ def getMyWorkspaceIPs( eventId ):
             lab_instance_id=lab_inst['id']
             private_ip=lab_inst['private_ip']
             public_ip=lab_inst['public_ip']
+            if VERBOSE: print(f"lab_id={lab_instance_id} private_ip=${private_ip} public_ip={public_ip}")
 
             workspacePrivateIps.append(private_ip)
             workspacePublicIps.append(public_ip)
