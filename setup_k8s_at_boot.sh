@@ -63,8 +63,10 @@ GET_EVENTS() {
 
 KUBEADM_INIT() { # USE $POD_CIDR
     #kubeadm init --kubernetes-version=$K8S_RELEASE --pod-network-cidr=$POD_CIDR --apiserver-cert-extra-sans=__MASTER1_IP__ | tee kubeadm-init.out
-    #kubeadm init --pod-network-cidr=$POD_CIDR --apiserver-cert-extra-sans=$(ec2metadata --public-ip) | tee kubeadm-init.out
-    kubeadm init | tee /tmp/kubeadm-init.out
+    kubeadm init --node-name master --pod-network-cidr=$POD_CIDR \
+	         --apiserver-cert-extra-sans=$PUBLIC_IP | \
+        tee kubeadm-init.out
+    #kubeadm init | tee /tmp/kubeadm-init.out
 }
 
 KUBEADM_JOIN() {
@@ -78,6 +80,8 @@ KUBEADM_JOIN() {
     let WORKER_NUM=NUM_NODES-NUM_MASTERS
     for WORKER in $(seq $WORKER_NUM); do
         let NODE_NUM=NUM_MASTERS+WORKER-1
+        let WORKERp1=1+WORKER
+        WORKER_NAME="worker$WORKERp1"
 
         set -x
             WORKER_IPS=$($SCRIPT_DIR/get_workspaces_info.py -ips $NODE_NUM)
@@ -89,7 +93,7 @@ KUBEADM_JOIN() {
 
         while ! sudo -u ubuntu ssh -o StrictHostKeyChecking=no $PRIVATE_IP uptime; do sleep 2; echo "Waiting for successful Worker$WORKER ssh conection ..."; done
 
-        CMD="sudo -u ubuntu ssh $PRIVATE_IP sudo $JOIN_COMMAND"
+        CMD="sudo -u ubuntu ssh $PRIVATE_IP sudo $JOIN_COMMAND --node-name $WORKER_NAME"
 	echo "-- $CMD"
 	$CMD
     done
