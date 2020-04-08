@@ -98,6 +98,11 @@ def getMyWorkspaceIPs( eventId ):
     #return res.json()
     return ( None, None )
 
+def getNumberOfNodes( eventId ):
+    ( workspacePrivateIps, workspacePublicIps ) = \
+        getMyWorkspaceIPs( eventId )
+    return len(workspacePrivateIps)
+
 def getMyNodeIndex( eventId ):
     ( workspacePrivateIps, workspacePublicIps ) = \
         getMyWorkspaceIPs( eventId )
@@ -151,4 +156,10 @@ while len(sys.argv) > 0:
         if VERBOSE: print(f"eventId={eventId}")
         idx = getMyNodeIndex( eventId )
         print(idx)
+
+    if arg == '-nodes':
+        eventId = getMyEventId( OWNER_ID_OR_EMAIL, status='live' )
+        if VERBOSE: print(f"eventId={eventId}")
+        nodes = getNumberOfNodes( eventId )
+        print(nodes)
 
