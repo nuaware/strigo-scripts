@@ -3,6 +3,8 @@
 CNI_YAMLS="https://docs.projectcalico.org/manifests/calico.yaml"
 POD_CIDR="192.168.0.0/16"
 
+K8S_RELEASE="1.18.0"
+
 # TOODL move to user-data:
 INSTALL_KUBELAB=1
 
@@ -65,9 +67,10 @@ GET_EVENTS() {
 }
 
 KUBEADM_INIT() { # USE $POD_CIDR
+
     #kubeadm init --kubernetes-version=$K8S_RELEASE --pod-network-cidr=$POD_CIDR --apiserver-cert-extra-sans=__MASTER1_IP__ | tee kubeadm-init.out
     export NODE_NAME="master"
-    kubeadm init --node-name $NODE_NAME --pod-network-cidr=$POD_CIDR \
+    kubeadm init --node-name $NODE_NAME --pod-network-cidr=$POD_CIDR --kubernetes-version=$K8S_RELEASE \
                  --apiserver-cert-extra-sans=$PUBLIC_IP | \
         tee kubeadm-init.out
     #kubeadm init | tee /tmp/kubeadm-init.out
