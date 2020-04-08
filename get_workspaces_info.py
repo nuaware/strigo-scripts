@@ -4,8 +4,15 @@ import os, sys
 import requests, json
 import urllib.request
 
+VERBOSE=os.getenv('VERBOSE', None)
+
 ORG_ID=os.getenv('ORG_ID')
 API_KEY=os.getenv('API_KEY')
+
+OWNER_ID_OR_EMAIL=os.getenv('OWNER_ID_OR_EMAIL')
+
+PRIVATE_IP=os.getenv('PRIVATE_IP')
+PUBLIC_IP=os.getenv('PUBLIC_IP')
 
 headers = {
     'Authorization': "Bearer " + ORG_ID + ":" + API_KEY,
@@ -13,8 +20,8 @@ headers = {
     'Content-Type': 'application/json'
 }
 
-print("headers:")
-print(headers)
+if VERBOSE != None:
+    print(f"headers: {headers}")
 
 def response(url):
     with urllib.request.urlopen(url, headers=headers) as response:
@@ -22,7 +29,8 @@ def response(url):
 
     res = response(url)
     ret = json.loads(res)
-    print(ret)
+    if VERBOSE:
+        print(f"get({url}) ==> {ret}")
     return ret
 
 def getEvents():
@@ -32,23 +40,19 @@ def getEvents():
     #print(res)
     return res.json()
 
-owner_email = 'michael.bright@nuaware.com'
-
-def getMyEventId( owner_email, status='live' ):
+def getMyEventId( owner_id_or_email, status='live' ):
     events = getEvents()
     field = 'id'
 
-    #print(events)
-    #print(json.dumps(events,  indent=2, sort_keys=True))
-
-    #for ev in json.load(events)['data']:
     for ev in events['data']:
         #print(ev)
-        if ev['status'] == status and ev['owner']['email'] == owner_email:
+        if ev['status'] == status and \
+                (ev['owner']['email'] == owner_id_or_email or \
+                 ev['owner']['id'] == owner_id_or_email):
             if field == '*':
-                print(json.dumps(ev,  indent=2, sort_keys=True))
+                if VERBOSE: print(f"event={json.dumps(ev,  indent=2, sort_keys=True)}")
             else:
-                print(ev[field])
+                if VERBOSE: print(f"event[{field}]={ev[field]}")
                 return ev[field]
 
 def getEventWorkspaces( eventId ):
@@ -56,18 +60,18 @@ def getEventWorkspaces( eventId ):
     res = requests.get(url, headers=headers)
     return res.json()
 
-eventId = getMyEventId( owner_email, status='live' )
+eventId = getMyEventId( OWNER_ID_OR_EMAIL, status='live' )
 
-print(eventId)
+print(f"eventId={eventId}")
 
 workspaces = getEventWorkspaces( eventId )
 
-print(workspaces)
+print(f"workspaces={workspaces}")
 
 
 '''
 for ev in json.load(sys.stdin)['data']:
-    if ev['status'] == status and ev['owner']['email'] == owner_email:
+    if ev['status'] == status and ev['owner']['email'] == owner_id_or_email:
         if field == '*':
             print(json.dumps(ev,  indent=2, sort_keys=True))
         else:
