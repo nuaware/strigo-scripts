@@ -3,9 +3,22 @@
 CNI_YAMLS="https://docs.projectcalico.org/manifests/calico.yaml"
 POD_CIDR="192.168.0.0/16"
 
+ERROR() {
+    echo "******************************************************"
+    echo "** ERROR: $*"
+    echo "******************************************************"
+}
+
+[ -z "$API_KEY" ] && ERROR "API_KEY is unset"
+[ -z "$ORG_ID"  ] && ERROR "ORG_ID is unset"
+[ -z "$OWNER_ID_OR_EMAIL" ] && ERROR "OWNER_ID_OR_EMAIL is unset"P
+
 #export PRIVATE_IP=$(hostname -i)
 export PRIVATE_IP=$(ec2metadata --local-ipv4)
 export PUBLIC_IP=$(ec2metadata --public-ipv4)
+
+[ -z "$PRIVATE_IP" ] && ERROR "PRIVATE_IP is unset"P
+[ -z "$PUBLIC_IP"  ] && ERROR "PUBLIC_IP is unset"P
 
 SCRIPT_DIR=$(dirname $0)
 
@@ -14,6 +27,7 @@ echo "Checking for Events owned by '$OWNER_ID_OR_EMAIL'"
 set -x
 NODE_IDX=$($SCRIPT_DIR/get_workspaces_info.py -idx)
 set +x
+[ -z "$NODE_IDX"  ] && ERROR "NODE_IDX is unset"P
 NUM_MASTERS=1
 
 apt-get update && apt-get install -y jq
