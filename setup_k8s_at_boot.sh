@@ -9,7 +9,11 @@ K8S_RELEASE="1.18.0"
 # TOODL move to user-data:
 INSTALL_KUBELAB=1
 
-echo export HOME=/root >> /root/.profile
+cat > /root/.jupyter.profile <<EOF
+export HOME=/root
+export PATH=~/bin:$PATH
+EOF
+
 export HOME=/root
 
 ERROR() {
