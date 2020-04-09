@@ -14,6 +14,10 @@ export HOME=/root
 export PATH=~/bin:$PATH
 EOF
 
+echo 'watch -n 2 "kubectl get nodes; echo; kubectl get ns; echo; kubectl -n kubelab -o wide get cm,pods"' >> /home/ubuntu/.bash_history
+echo 'watch -n 2 "kubectl get nodes; echo; kubectl get ns; echo; kubectl -n kubelab -o wide get cm,pods"' >> /root/.bash_history
+echo '. /root/.jupyter.profile; cd; echo HOME=$HOME' >> /root/.bash_history
+
 export HOME=/root
 
 ERROR() {
@@ -170,6 +174,7 @@ kubectl -n kubelab get pods -o wide | grep " Running " || sleep 10
 kubectl -n kubelab get pods -o wide | grep " Running " || sleep 10
 kubectl -n kubelab get pods -o wide | grep " Running " || sleep 10
 
+kubectl -n kubelab cp /root/.jupyter.profile kubelab:.profile
 EOF
 
     chmod +x /tmp/kubelab.sh
