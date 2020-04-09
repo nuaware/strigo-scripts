@@ -161,9 +161,9 @@ kubectl -n kubelab create configmap kube-configmap --from-file=/home/ubuntu/.kub
 kubectl create -f /root/github.com/kubelab/kubelab.yaml
 
 kubectl -n kubelab get cm
-kubectl -n kubelab get pods | grep " Running " || sleep 10
-kubectl -n kubelab get pods | grep " Running " || sleep 10
-kubectl -n kubelab get pods | grep " Running " || sleep 10
+kubectl -n kubelab get pods -o wide | grep " Running " || sleep 10
+kubectl -n kubelab get pods -o wide | grep " Running " || sleep 10
+kubectl -n kubelab get pods -o wide | grep " Running " || sleep 10
 
 EOF
 
