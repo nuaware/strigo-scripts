@@ -3,7 +3,7 @@
 CNI_YAMLS="https://docs.projectcalico.org/manifests/calico.yaml"
 POD_CIDR="192.168.0.0/16"
 
-K8S_RELEASE="1.18.0"
+K8S_RELEASE="1.18.1"
 
 # TOODL move to user-data:
 INSTALL_KUBELAB=1
