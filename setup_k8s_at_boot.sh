@@ -6,8 +6,15 @@ POD_CIDR="192.168.0.0/16"
 #K8S_RELEASE="1.18.1"
 K8S_RELEASE="1.18.0"
 
-# TOODL move to user-data:
+# TODO: move to user-data:
 INSTALL_KUBELAB=1
+
+# TODO: move to user-data: (only download for workshops)
+DOWNLOAD_PCC_TWISTLOCK=1
+INSTALL_PCC_TWISTLOCK=1
+
+# Terraform
+INSTALL_TERRAFORM=1
 
 cat > /root/.jupyter.profile <<EOF
 export HOME=/root
@@ -158,6 +165,8 @@ INSTALL_KUBELAB() {
 # TODO: add note in kubelab/README.md
 # TODO: Match on/modify after context name
 
+set -x
+
 export KUBECONFIG=/etc/kubernetes/admin.conf
 
 sed -e '/user: kubernetes-admin/a \ \ \ \ namespace: default' < /home/ubuntu/.kube/config  > /home/ubuntu/.kube/config.kubelab
@@ -180,6 +189,32 @@ EOF
     chmod +x /tmp/kubelab.sh
     /tmp/kubelab.sh
 }
+
+INSTALL_PCC_TWISTLOCK() {
+    echo TODO
+}
+
+INSTALL_TERRAFORM() {
+    RELEASE="0.12.24"
+
+    ZIP=/tmp/terraform.${RELEASE}.zip
+    URL="https://releases.hashicorp.com/terraform/${RELEASE}/terraform_${RELEASE}_linux_amd64.zip"
+
+    wget -qO $ZIP $URL
+
+    unzip $ZIP /root/bin/terraform
+}
+
+DOWNLOAD_PCC_TWISTLOCK() {
+    #https://cdn.twistlock.com/releases/6e6c2d6a/prisma_cloud_compute_edition_20_04_163.tar.gz
+    TWISTLOCK_PCC_RELEASE=20_04_163
+
+    TAR="/tmp/prisma_cloud_compute_edition_${TWISTLOCK_PCC_RELEASE}.tar.gz"
+    URL="https://cdn.twistlock.com/releases/6e6c2d6a/prisma_cloud_compute_edition_${TWISTLOCK_PCC_RELEASE}.tar.gz"
+
+    wget -O $TAR $URL
+}
+
 
 REGISTER_INSTALL() {
     wget -qO - "$REGISTER_URL/${EVENT}_${WORKSPACE}_${NODE_NAME}_${PUBLIC_IP}"
@@ -215,7 +250,10 @@ if [ $NODE_IDX -eq 0 ] ; then
     SECTION CNI_INSTALL
     SECTION KUBEADM_JOIN
     SECTION KUBECTL_VERSION
-    [ $INSTALL_KUBELAB -ne 0 ] && SECTION INSTALL_KUBELAB
+    [ $INSTALL_KUBELAB -ne 0 ]        && SECTION INSTALL_KUBELAB
+    [ $DOWNLOAD_PCC_TWISTLOCK -ne 0 ] && SECTION DOWNLOAD_PCC_TWISTLOCK
+    [ $INSTALL_PCC_TWISTLOCK -ne 0 ]  && SECTION INSTALL_PCC_TWISTLOCK
+    [ $INSTALL_TERRAFORM -ne 0 ]      && SECTION INSTALL_TERRAFORM
 else
     while [ ! -f /tmp/NODE_NAME ]; do sleep 5; done
     NODE_NAME=$(cat /tmp/NODE_NAME)
