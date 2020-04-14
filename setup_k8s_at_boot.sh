@@ -6,6 +6,9 @@ POD_CIDR="192.168.0.0/16"
 #K8S_RELEASE="1.18.1"
 K8S_RELEASE="1.18.0"
 
+#BIN=/root/bin
+BIN=/usr/local/bin
+
 # TODO: move to user-data:
 INSTALL_KUBELAB=1
 
@@ -15,6 +18,14 @@ INSTALL_PCC_TWISTLOCK=1
 
 # Terraform
 INSTALL_TERRAFORM=1
+
+# Helm
+INSTALL_HELM=1
+
+cat >> /root/.profile <<EOF
+export HOME=/root
+export PATH=~/bin:$PATH
+EOF
 
 cat > /root/.jupyter.profile <<EOF
 export HOME=/root
@@ -194,6 +205,33 @@ INSTALL_PCC_TWISTLOCK() {
     echo TODO
 }
 
+INSTALL_HELM() {
+    RELEASE="v3.1.2"
+    TAR_GZ="/tmp/helm.${RELEASE}.tar.gz"
+    URL="https://get.helm.sh/helm-${RELEASE}-linux-amd64.tar.gz"
+
+    wget -qO $TAR_GZ $URL
+
+    mkdir -p   $BIN
+    tar xf $TAR_GZ -C $BIN --strip-components 1 linux-amd64/helm
+
+    helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+
+    #helm search hub ingress-nginx
+    #helm install hub stable/nginx-ingress
+    #kubectl create ns nginx-ingress; helm install -n nginx-ingress hub stable/nginx-ingress
+
+    #helm search hub redis
+    #kubectl create ns redis
+    #helm install -n redis hub stable/redis-ha
+
+    #helm search hub traefik
+    #helm install hub stable/traefik
+
+
+
+}
+
 INSTALL_TERRAFORM() {
     RELEASE="0.12.24"
 
@@ -202,8 +240,8 @@ INSTALL_TERRAFORM() {
 
     wget -qO $ZIP $URL
 
-    mkdir -p   /root/bin/
-    unzip $ZIP /root/bin/terraform
+    mkdir -p   $BIN/
+    unzip $ZIP -d $BIN terraform
 }
 
 DOWNLOAD_PCC_TWISTLOCK() {
@@ -230,7 +268,7 @@ SECTION() {
 
 NUM_MASTERS=1
 
-apt-get update && apt-get install -y jq
+apt-get update && apt-get install -y jq zip
 
 id -un
 
@@ -255,6 +293,7 @@ if [ $NODE_IDX -eq 0 ] ; then
     [ $DOWNLOAD_PCC_TWISTLOCK -ne 0 ] && SECTION DOWNLOAD_PCC_TWISTLOCK
     [ $INSTALL_PCC_TWISTLOCK -ne 0 ]  && SECTION INSTALL_PCC_TWISTLOCK
     [ $INSTALL_TERRAFORM -ne 0 ]      && SECTION INSTALL_TERRAFORM
+    [ $INSTALL_HELM -ne 0 ]           && SECTION INSTALL_HELM
 else
     while [ ! -f /tmp/NODE_NAME ]; do sleep 5; done
     NODE_NAME=$(cat /tmp/NODE_NAME)
