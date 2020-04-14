@@ -88,7 +88,7 @@ KUBEADM_INIT() { # USE $POD_CIDR
     export NODE_NAME="master"
     kubeadm init --node-name $NODE_NAME --pod-network-cidr=$POD_CIDR --kubernetes-version=$K8S_RELEASE \
                  --apiserver-cert-extra-sans=$PUBLIC_IP | \
-        tee kubeadm-init.out
+        tee /tmp/kubeadm-init.out
     #kubeadm init | tee /tmp/kubeadm-init.out
 }
 
@@ -202,6 +202,7 @@ INSTALL_TERRAFORM() {
 
     wget -qO $ZIP $URL
 
+    mkdir -p   /root/bin/
     unzip $ZIP /root/bin/terraform
 }
 
