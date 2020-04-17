@@ -7,6 +7,8 @@ POD_CIDR="192.168.0.0/16"
 K8S_RELEASE="1.18.0"
 K8S_INSTALLER="kubeadm"
 
+NUM_MASTERS=1
+
 #K8S_INSTALLER="rancher"
 #RANCHER_RKE_RELEASE="v1.0.6"
 
@@ -89,11 +91,13 @@ set_EVENT_WORKSPACE_NODES() {
     let NUM_WORKERS=NUM_NODES-NUM_MASTERS
 
     NODE_IDX=$($SCRIPT_DIR/get_workspaces_info.py -idx | tee -a $EVENT_LOG)
+    [ -z "$NODE_IDX"  ] && die "NODE_IDX is unset"
 
     EVENT=$($SCRIPT_DIR/get_workspaces_info.py -e | tee -a $EVENT_LOG)
-    #[ "$EVENT" = "None" ] && { echo "DEBUG: env= ------------------------ "; env; env | sed 's/^/export /' > /tmp/env.rc; echo "--------------------------------"; sleep 30; }
+    [ -z "$EVENT"  ] && die "EVENT is unset"
+
     WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -w | tee -a $EVENT_LOG)
-    #WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -W | sed -e 's/  */_/g')
+    [ -z "$WORKSPACE"  ] && die "WORKSPACE is unset"
 
     $SCRIPT_DIR/get_workspaces_info.py -v -ips | tee -a $EVENT_LOG
 }
@@ -179,6 +183,9 @@ CONFIG_NODES_ACCESS() {
 
 	_SSH_IP="sudo -u ubuntu ssh -o StrictHostKeyChecking=no $WORKER_PRIVATE_IP"
         while ! $_SSH_IP uptime; do sleep 2; echo "Waiting for successful Worker$WORKER ssh conection ..."; done
+
+	_SSH_ROOT_IP="ssh -u root -o StrictHostKeyChecking=no $WORKER_PRIVATE_IP"
+        $_SSH_IP uptime
     done
 
     echo; echo "-- setting up /etc/hosts"
@@ -325,6 +332,7 @@ DOWNLOAD_PCC_TWISTLOCK() {
     URL="https://cdn.twistlock.com/releases/6e6c2d6a/prisma_cloud_compute_edition_${TWISTLOCK_PCC_RELEASE}.tar.gz"
 
     wget -O $TAR $URL
+    SECTION_SUMMARY_OP=$(ls -altrh $TAR)
 }
 
 REGISTER_INSTALL_START() {
@@ -337,12 +345,14 @@ REGISTER_INSTALL_END() {
 
 SECTION() {
     SECTION="$*"
+    SECTION_SUMMARY_OP=""
 
     echo; echo "== [$(date)] ========== $SECTION =================================" | tee -a /tmp/SECTION.log
     $*
+    [ ! -z "$SECTION_SUMMARY_OP" ] && echo "$SECTION_SUMMARY_OP" | tee -a /tmp/SECTION.log
 }
 
-NUM_MASTERS=1
+## -- MAIN ---------------------------------------------------------------------
 
 apt-get update && apt-get install -y jq zip
 
@@ -354,18 +364,19 @@ SECTION START_DOCKER_plus
 # SECTION GET_LAB_RESOURCES - CAREFUL THIS WILL EXPOSE YOUR API_KEY/ORG_ID
 
 set_EVENT_WORKSPACE_NODES
-[ -z "$NODE_IDX"  ] && {
-    die "NODE_IDX is unset"
-}
 
 INSTALL_KUBERNETES() {
     case $K8S_INSTALLER in
         "kubeadm")
             SECTION KUBEADM_INIT
             SECTION SETUP_KUBECONFIG
+	    SECTION_SUMMARY_OP=$(kubectl get nodes)
             SECTION CNI_INSTALL
+	    SECTION_SUMMARY_OP=$(kubectl get nodes)
             SECTION KUBEADM_JOIN
+	    SECTION_SUMMARY_OP=$(kubectl get nodes)
             SECTION KUBECTL_VERSION
+	    SECTION_SUMMARY_OP=$(kubectl version)
         ;;
         "rancher")
             SECTION RANCHER_INIT
@@ -396,11 +407,13 @@ SETUP_NFS() {
 	    systemctl restart nfs-kernel-server
 	    ln -s /var/nfs/general /nfs/
 
+            SECTION_SUMMARY_OP=$(ls -altrh /var/nfs/general)
 	    ;;
         *)
             apt-get install -y nfs-common
 	    mkdir -p /nfs/general
 	    mount master:/var/nfs/general /nfs/general
+            SECTION_SUMMARY_OP=$(df -h | grep /nfs/)
 	    ;;
     esac
 }
