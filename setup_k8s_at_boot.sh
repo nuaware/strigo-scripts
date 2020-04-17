@@ -186,12 +186,12 @@ CONFIG_NODES_ACCESS() {
 	_SSH_IP="sudo -u ubuntu ssh -o StrictHostKeyChecking=no $WORKER_PRIVATE_IP"
         while ! $_SSH_IP uptime; do sleep 2; echo "Waiting for successful $WORKER_NODE_NAME ssh conection ..."; done
 
-	_SSH_ROOT_IP="ssh -u ubuntu -o StrictHostKeyChecking=no $WORKER_PRIVATE_IP"
+	_SSH_ROOT_IP="ssh -l ubuntu -o StrictHostKeyChecking=no $WORKER_PRIVATE_IP"
         $_SSH_ROOT_IP uptime
 
 	{
-            echo -n "From ubuntu to ubuntu@$WORKER_NODE_NAME: hostname="; $_SSH_IP      hostname; 
-            echo -n "From root to ubuntu@$WORKER_NODE_NAME: hostname=";   $_SSH_ROOT_IP hostname;
+	    echo -n "From ubuntu to ubuntu@$WORKER_NODE_NAME: hostname=$($_SSH_IP      hostname)"; 
+	    echo -n "From   root to ubuntu@$WORKER_NODE_NAME: hostname=$($_SSH_ROOT_IP hostname)";
 	} | tee -a /tmp/SECTION.log
     done
 
