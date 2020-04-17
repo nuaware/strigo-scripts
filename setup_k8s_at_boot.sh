@@ -335,7 +335,7 @@ REGISTER_INSTALL_END() {
 SECTION() {
     SECTION="$*"
 
-    echo; echo "== [$(date)] ========== $SECTION =================================" | tee /tmp/SECTION.log
+    echo; echo "== [$(date)] ========== $SECTION =================================" | tee -a /tmp/SECTION.log
     $*
 }
 
