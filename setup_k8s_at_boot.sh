@@ -65,7 +65,10 @@ SCRIPT_DIR=$(dirname $0)
 
 echo "Checking for Events owned by '$OWNER_ID_OR_EMAIL'"
 
-set_EVENT_WORKSPACE() {
+set_EVENT_WORKSPACE_NODES() {
+    NUM_NODES=$($SCRIPT_DIR/get_workspaces_info.py -nodes)
+    let NUM_WORKERS=NUM_NODES-NUM_MASTERS
+
     NODE_IDX=$($SCRIPT_DIR/get_workspaces_info.py -idx)
 
     EVENT=$($SCRIPT_DIR/get_workspaces_info.py -e)
@@ -120,13 +123,10 @@ KUBEADM_INIT() { # USE $POD_CIDR
 # - Create .ssh/config entries
 #
 CONFIG_NODES_ACCESS() {
-    NUM_NODES=$($SCRIPT_DIR/get_workspaces_info.py -nodes)
-
-    let WORKER_NUM=NUM_NODES-NUM_MASTERS
     echo "$PRIVATE_IP master" | tee /tmp/hosts.add
 
     WORKER_PRIVATE_IPS=""
-    for WORKER in $(seq $WORKER_NUM); do
+    for WORKER in $(seq $NUM_WORKERS); do
         WORKER_IPS=$($SCRIPT_DIR/get_workspaces_info.py -ips $NODE_NUM)
         WORKER_PRIVATE_IP=${WORKER_IPS%,*};
         WORKER_PUBLIC_IP=${WORKER_IPS#*,};
@@ -157,7 +157,7 @@ CONFIG_NODES_ACCESS() {
 
     echo; echo "-- setting up /etc/hosts"
     cat /tmp/hosts.add >> /etc/hosts
-    for WORKER in $(seq $WORKER_NUM); do
+    for WORKER in $(seq $NUM_WORKERS); do
         ssh $WORKER_NODE_NAME "sudo cat /tmp/hosts.add >> /etc/hosts"
     done
 }
@@ -166,7 +166,7 @@ KUBEADM_JOIN() {
     JOIN_COMMAND=$(kubeadm token create --print-join-command)
 
     echo; echo "-- performing join command on worker nodes"
-    for WORKER in $(seq $WORKER_NUM); do
+    for WORKER in $(seq $NUM_WORKERS); do
         let NODE_NUM=NUM_MASTERS+WORKER-1
         WORKER_NODE_NAME="worker$WORKER"
 
@@ -328,7 +328,7 @@ id -un
 SECTION START_DOCKER_plus
 # SECTION GET_LAB_RESOURCES - CAREFUL THIS WILL EXPOSE YOUR API_KEY/ORG_ID
 
-set_EVENT_WORKSPACE
+set_EVENT_WORKSPACE_NODES
 [ -z "$NODE_IDX"  ] && {
     ERROR "NODE_IDX is unset"
 }
