@@ -154,7 +154,9 @@ CONFIG_NODES_ACCESS() {
         WORKER_PRIVATE_IP=${WORKER_IPS%,*};
         WORKER_PUBLIC_IP=${WORKER_IPS#*,};
         WORKER_PRIVATE_IPS+="$WORKER_PRIVATE_IP"
+	WORKER_NODE_NAME="worker$WORKER"
 	echo "$WORKER_PRIVATE_IP $WORKER_NODE_NAME" | tee -a /tmp/hosts.add
+
         mkdir -p ~/.ssh
         mkdir -p /home/ubuntu/.ssh
         touch /home/ubuntu/.ssh/config
@@ -421,6 +423,8 @@ else
 fi
 
 [ ! -z "$REGISTER_URL" ] && SECTION REGISTER_INSTALL_END
+
+SECTION exit
 
 
 
