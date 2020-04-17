@@ -160,6 +160,7 @@ CONFIG_NODES_ACCESS() {
         mkdir -p ~/.ssh
         mkdir -p /home/ubuntu/.ssh
         touch /home/ubuntu/.ssh/config
+        cp -a /home/ubuntu/.ssh/id_rsa /root/.ssh/
         chown ubuntu:ubuntu /home/ubuntu/.ssh/config
 	{
             echo ""
@@ -167,7 +168,7 @@ CONFIG_NODES_ACCESS() {
 	    echo "    User     ubuntu"
 	    echo "    Hostname $WORKER_PRIVATE_IP"
 	    echo "    IdentityFile ~/.ssh/id_rsa"
-        } | tee -a ~/.ssh/config | tee -a /home/ubuntu/.ssh/config
+        } | tee -a /home/ubuntu/.ssh/config | sed 's?~?/root?' | tee -a ~/.ssh/config 
 
         echo "WORKER[$WORKER]=NODE[$NODE_NUM] $WORKER_NODE_NAME WORKER_PRIVATE_IP=$WORKER_PRIVATE_IP WORKER_PUBLIC_IP=$WORKER_PUBLIC_IP"
 
