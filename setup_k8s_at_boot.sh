@@ -19,6 +19,7 @@ INSTALL_KUBELAB=1
 # TODO: move to user-data: (only download for workshops)
 DOWNLOAD_PCC_TWISTLOCK=1
 INSTALL_PCC_TWISTLOCK=0
+[ ! -z "$TW_A_K" ] && echo "export TW_A_K=$TW_A_K" >> /root/.profile
 
 # Terraform
 INSTALL_TERRAFORM=1
@@ -95,6 +96,13 @@ GET_LAB_RESOURCES() {
 
 GET_EVENTS() {
     curl -H "Authorization: Bearer ${ORG_ID}:${API_KEY}" -H "Accept: application/json" -H "Content-Type: application/json" "https://app.strigo.io/api/v1/events" | jq . | tee /tmp/EVENTS.json
+}
+
+RANCHER_RKE_INIT() { # USE $POD_CIDR
+
+    FILE=$BIN/rke
+    URL=https://github.com/rancher/rke/releases/download/${RANCHER_RKE_RELEASE}/rke_linux-amd64
+    wget -qO $BIN/rke $URL
 }
 
 KUBEADM_INIT() { # USE $POD_CIDR
