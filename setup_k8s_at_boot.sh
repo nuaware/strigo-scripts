@@ -75,22 +75,27 @@ echo "Checking for Events owned by '$OWNER_ID_OR_EMAIL'"
 set_EVENT_WORKSPACE_NODES() {
     [ -z "$NUM_NODES" ] && die "Expected number of nodes is not set/exported from invoking user-data script"
 
-    _NUM_NODES=$($SCRIPT_DIR/get_workspaces_info.py -nodes)
+    EVENT_INFO=/tmp/event.log
+    cp /dev/null $EVENT_LOG
+
+    _NUM_NODES=$($SCRIPT_DIR/get_workspaces_info.py -nodes | tee -a $EVENT_LOG)
     while [ $_NUM_NODES -lt $NUM_NODES ]; do
         echo "[ '$_NUM_NODES' -lt '$NUM_NODES' ] - waiting for more nodes to become available ..."
 	sleep 2
-        _NUM_NODES=$($SCRIPT_DIR/get_workspaces_info.py -nodes)
+        _NUM_NODES=$($SCRIPT_DIR/get_workspaces_info.py -nodes | tee -a $EVENT_LOG)
         [ -z "$_NUM_NODES" ] && _NUM_NODES=0
     done
 
     let NUM_WORKERS=NUM_NODES-NUM_MASTERS
 
-    NODE_IDX=$($SCRIPT_DIR/get_workspaces_info.py -idx)
+    NODE_IDX=$($SCRIPT_DIR/get_workspaces_info.py -idx | tee -a $EVENT_LOG)
 
-    EVENT=$($SCRIPT_DIR/get_workspaces_info.py -e)
+    EVENT=$($SCRIPT_DIR/get_workspaces_info.py -e | tee -a $EVENT_LOG)
     #[ "$EVENT" = "None" ] && { echo "DEBUG: env= ------------------------ "; env; env | sed 's/^/export /' > /tmp/env.rc; echo "--------------------------------"; sleep 30; }
-    WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -w)
+    WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -w | tee -a $EVENT_LOG)
     #WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -W | sed -e 's/  */_/g')
+
+    $SCRIPT_DIR/get_workspaces_info.py -v -ips | tee -a $EVENT_LOG
 }
 
 START_DOCKER_plus() {
@@ -143,6 +148,8 @@ CONFIG_NODES_ACCESS() {
 
     WORKER_PRIVATE_IPS=""
     for WORKER in $(seq $NUM_WORKERS); do
+        let NODE_NUM=NUM_MASTERS+WORKER-1
+
         WORKER_IPS=$($SCRIPT_DIR/get_workspaces_info.py -ips $NODE_NUM)
         WORKER_PRIVATE_IP=${WORKER_IPS%,*};
         WORKER_PUBLIC_IP=${WORKER_IPS#*,};
@@ -183,7 +190,6 @@ KUBEADM_JOIN() {
 
     echo; echo "-- performing join command on worker nodes"
     for WORKER in $(seq $NUM_WORKERS); do
-        let NODE_NUM=NUM_MASTERS+WORKER-1
         WORKER_NODE_NAME="worker$WORKER"
 
         #CMD="$_SSH_IP sudo $JOIN_COMMAND --node-name $WORKER_NODE_NAME"
@@ -329,7 +335,7 @@ REGISTER_INSTALL_END() {
 SECTION() {
     SECTION="$*"
 
-    echo; echo "============ $SECTION ================================="
+    echo; echo "== [$(date)] ========== $SECTION =================================" | tee /tmp/SECTION.log
     $*
 }
 
