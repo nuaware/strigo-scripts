@@ -18,7 +18,7 @@ INSTALL_KUBELAB=1
 
 # TODO: move to user-data: (only download for workshops)
 DOWNLOAD_PCC_TWISTLOCK=1
-INSTALL_PCC_TWISTLOCK=1
+INSTALL_PCC_TWISTLOCK=0
 
 # Terraform
 INSTALL_TERRAFORM=1
@@ -107,25 +107,20 @@ KUBEADM_INIT() { # USE $POD_CIDR
     #kubeadm init | tee /tmp/kubeadm-init.out
 }
 
-KUBEADM_JOIN() {
-    # TODO: to split - includes ssh ocnfig setup, /etc/hosts setup ...
+# Configure nodes access from master:
+# - Add entries to /etc/hosts
+# - Create .ssh/config entries
+#
+CONFIG_NODES_ACCESS() {
     NUM_NODES=$($SCRIPT_DIR/get_workspaces_info.py -nodes)
 
-    JOIN_COMMAND=$(kubeadm token create --print-join-command)
-
-    let WORKER_NUM=NUM_NODES-NUM_MASTERS
-    echo "PRIVATE_IP master" | tee /tmp/hosts.add
-
-    echo; echo "-- performing join command on worker nodes"
+    WORKER_PRIVATE_IPS=""
     for WORKER in $(seq $WORKER_NUM); do
-        let NODE_NUM=NUM_MASTERS+WORKER-1
-        WORKER_NODE_NAME="worker$WORKER"
-
         WORKER_IPS=$($SCRIPT_DIR/get_workspaces_info.py -ips $NODE_NUM)
         WORKER_PRIVATE_IP=${WORKER_IPS%,*};
         WORKER_PUBLIC_IP=${WORKER_IPS#*,};
-
-	echo "$WORKER_PRIVATE_IP $WORKER_NODE_NAME" | tee -a /etc/hosts.add
+        WORKER_PRIVATE_IPS+="$WORKER_PRIVATE_IP"
+	echo "$WORKER_PRIVATE_IP $WORKER_NODE_NAME" | tee -a /tmp/hosts.add
         mkdir -p ~/.ssh
         mkdir -p /home/ubuntu/.ssh
         touch /home/ubuntu/.ssh/config
@@ -140,19 +135,40 @@ KUBEADM_JOIN() {
 
         echo "WORKER[$WORKER]=NODE[$NODE_NUM] $WORKER_NODE_NAME WORKER_PRIVATE_IP=$WORKER_PRIVATE_IP WORKER_PUBLIC_IP=$WORKER_PUBLIC_IP"
 
+        WORKER_IPS=$($SCRIPT_DIR/get_workspaces_info.py -ips $NODE_NUM)
+        WORKER_PRIVATE_IP=${WORKER_IPS%,*};
+        WORKER_PUBLIC_IP=${WORKER_IPS#*,};
+        WORKER_PRIVATE_IPS+="$WORKER_PRIVATE_IP"
+
 	_SSH_IP="sudo -u ubuntu ssh -o StrictHostKeyChecking=no $WORKER_PRIVATE_IP"
         while ! $_SSH_IP uptime; do sleep 2; echo "Waiting for successful Worker$WORKER ssh conection ..."; done
-
-        CMD="$_SSH_IP sudo $JOIN_COMMAND --node-name $WORKER_NODE_NAME"
-        echo "-- $CMD"
-        $CMD
-        echo $WORKER_NODE_NAME | $_SSH_IP tee /tmp/NODE_NAME
     done
 
     echo; echo "-- setting up /etc/hosts"
     cat /tmp/hosts.add >> /etc/hosts
     for WORKER in $(seq $WORKER_NUM); do
         ssh $WORKER_NODE_NAME "sudo cat /tmp/hosts.add >> /etc/hosts"
+    done
+}
+
+KUBEADM_JOIN() {
+    # TODO: to split - includes ssh ocnfig setup, /etc/hosts setup ...
+
+    JOIN_COMMAND=$(kubeadm token create --print-join-command)
+
+    let WORKER_NUM=NUM_NODES-NUM_MASTERS
+    echo "$PRIVATE_IP master" | tee /tmp/hosts.add
+
+    echo; echo "-- performing join command on worker nodes"
+    for WORKER in $(seq $WORKER_NUM); do
+        let NODE_NUM=NUM_MASTERS+WORKER-1
+        WORKER_NODE_NAME="worker$WORKER"
+
+        #CMD="$_SSH_IP sudo $JOIN_COMMAND --node-name $WORKER_NODE_NAME"
+        CMD="ssh $WORKER_NODE_NAME sudo $JOIN_COMMAND --node-name $WORKER_NODE_NAME"
+        echo "-- $CMD"
+        $CMD
+        echo $WORKER_NODE_NAME | ssh $WORKER_NODE_NAME /tmp/NODE_NAME
     done
 }
 
@@ -341,8 +357,8 @@ SETUP_NFS() {
 	    mkdir -p /var/nfs/general /nfs
 	    chown nobody:nogroup /var/nfs/general
 
-	    for IP in WORKER_IPS; do
-                echo "/var/nfs/general    $PIP(rw,sync,no_subtree_check)"
+	    for WIP in $WORKER_PRIVATE_IPS; do
+                echo "/var/nfs/general    $WIP(rw,sync,no_subtree_check)"
 	        #/home       $PIP(rw,sync,no_root_squash,no_subtree_check)
 	    done | tee -a /etc/exports
 
@@ -362,6 +378,7 @@ SETUP_NFS() {
 
 # Perform all kubeadm operations from Master1:
 if [ $NODE_IDX -eq 0 ] ; then
+    SECTION CONFIG_NODES_ACCESS
     SECTION INSTALL_KUBERNETES
     [ $INSTALL_KUBELAB -ne 0 ]        && SECTION INSTALL_KUBELAB
     [ $DOWNLOAD_PCC_TWISTLOCK -ne 0 ] && SECTION DOWNLOAD_PCC_TWISTLOCK
