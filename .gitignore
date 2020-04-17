@@ -2,3 +2,7 @@
 BACKUPS/
 scp_files.sh
 tmp.from.vm
+.jupyter.master.ip
+jupyter_tunnel.sh
+scp_kubelab.ipynb.sh
+OLD/
