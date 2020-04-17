@@ -110,8 +110,10 @@ START_DOCKER_plus() {
 
     groupadd docker
     usermod -aG docker ubuntu
+    {
     echo "ubuntu: docker ps"
     sudo -u ubuntu docker ps
+    } | tee -a /tmp/SECTION.log
     echo "ubuntu: docker version"
     sudo -i docker version
     #newgrp docker
@@ -159,7 +161,7 @@ CONFIG_NODES_ACCESS() {
         WORKER_PUBLIC_IP=${WORKER_IPS#*,};
         WORKER_PRIVATE_IPS+="$WORKER_PRIVATE_IP"
 	WORKER_NODE_NAME="worker$WORKER"
-	echo "$WORKER_PRIVATE_IP $WORKER_NODE_NAME" | tee -a /tmp/hosts.add
+	echo "$WORKER_PRIVATE_IP $WORKER_NODE_NAME" | tee -a /tmp/hosts.add | tee -a /tmp/SECTION.log
 
         mkdir -p ~/.ssh
         mkdir -p /home/ubuntu/.ssh
@@ -182,10 +184,15 @@ CONFIG_NODES_ACCESS() {
         WORKER_PRIVATE_IPS+="$WORKER_PRIVATE_IP"
 
 	_SSH_IP="sudo -u ubuntu ssh -o StrictHostKeyChecking=no $WORKER_PRIVATE_IP"
-        while ! $_SSH_IP uptime; do sleep 2; echo "Waiting for successful Worker$WORKER ssh conection ..."; done
+        while ! $_SSH_IP uptime; do sleep 2; echo "Waiting for successful $WORKER_NODE_NAME ssh conection ..."; done
 
 	_SSH_ROOT_IP="ssh -u ubuntu -o StrictHostKeyChecking=no $WORKER_PRIVATE_IP"
         $_SSH_ROOT_IP uptime
+
+	{
+            echo -n "From ubuntu to ubuntu@$WORKER_NODE_NAME: hostname="; $_SSH_IP      hostname; 
+            echo -n "From root to ubuntu@$WORKER_NODE_NAME: hostname=";   $_SSH_ROOT_IP hostname;
+	} | tee -a /tmp/SECTION.log
     done
 
     echo; echo "-- setting up /etc/hosts"
