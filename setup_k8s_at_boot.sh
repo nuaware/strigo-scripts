@@ -110,12 +110,8 @@ START_DOCKER_plus() {
 
     groupadd docker
     usermod -aG docker ubuntu
-    {
-    echo "ubuntu: docker ps"
-    sudo -u ubuntu docker ps
-    } | tee -a /tmp/SECTION.log
-    echo "ubuntu: docker version"
-    sudo -i docker version
+    { echo "ubuntu: docker ps"; sudo -u ubuntu docker ps; } | tee -a /tmp/SECTION.log
+    echo "ubuntu: docker version"; sudo -i docker version
     #newgrp docker
 }
 
@@ -215,7 +211,7 @@ KUBEADM_JOIN() {
         $CMD
         echo $WORKER_NODE_NAME | ssh $WORKER_NODE_NAME /tmp/NODE_NAME
     done
-    SECTION_SUMMARY_OP=$(kubectl get nodes)
+    kubectl get nodes | SECTION_LOG
 }
 
 CNI_INSTALL() {
@@ -228,7 +224,7 @@ CNI_INSTALL() {
     kubectl get pods -n kube-system
 
     echo "NEED TO WAIT - HOW TO HANDLE failure ... need to restart coredns, other?"
-    SECTION_SUMMARY_OP=$(kubectl get nodes)
+    kubectl get nodes | SECTION_LOG
 }
 
 SETUP_KUBECONFIG() {
@@ -247,12 +243,12 @@ SETUP_KUBECONFIG() {
     echo "ubuntu: kubectl get nodes:"
     #sudo -u ubuntu KUBECONFIG=/home/ubuntu/.kube/config kubectl get nodes
     sudo -u ubuntu kubectl get nodes
-    SECTION_SUMMARY_OP=$(kubectl get nodes)
+    kubectl get nodes | SECTION_LOG
 }
 
 KUBECTL_VERSION() {
     kubectl version -o yaml
-    SECTION_SUMMARY_OP=$(kubectl version)
+    kubectl version | SECTION_LOG
 }
 
 INSTALL_KUBELAB() {
@@ -343,7 +339,7 @@ DOWNLOAD_PCC_TWISTLOCK() {
     URL="https://cdn.twistlock.com/releases/6e6c2d6a/prisma_cloud_compute_edition_${TWISTLOCK_PCC_RELEASE}.tar.gz"
 
     wget -O $TAR $URL
-    SECTION_SUMMARY_OP=$(ls -altrh $TAR)
+    ls -altrh $TAR | SECTION_LOG
 }
 
 REGISTER_INSTALL_START() {
@@ -354,13 +350,19 @@ REGISTER_INSTALL_END() {
     wget -qO - "$REGISTER_URL/${EVENT}_${WORKSPACE}_${NODE_NAME}_${PUBLIC_IP}_provisioning_END"
 }
 
+SECTION_LOG() {
+    if [ -z "$1" ]; then
+        tee -a /tmp/SECTION.log
+    else
+        echo "$*" >> /tmp/SECTION.log
+    fi
+}
+
 SECTION() {
     SECTION="$*"
-    SECTION_SUMMARY_OP=""
 
     echo; echo "== [$(date)] ========== $SECTION =================================" | tee -a /tmp/SECTION.log
     $*
-    [ ! -z "$SECTION_SUMMARY_OP" ] && echo "$SECTION_SUMMARY_OP" | tee -a /tmp/SECTION.log
 }
 
 ## -- MAIN ---------------------------------------------------------------------
@@ -414,13 +416,13 @@ SETUP_NFS() {
 	    systemctl restart nfs-kernel-server
 	    ln -s /var/nfs/general /nfs/
 
-            SECTION_SUMMARY_OP=$(ls -altrh /var/nfs/general)
+            ls -altrh /var/nfs/general | SECTION_LOG
 	    ;;
         *)
             apt-get install -y nfs-common
 	    mkdir -p /nfs/general
 	    mount master:/var/nfs/general /nfs/general
-            SECTION_SUMMARY_OP=$(df -h | grep /nfs/)
+            df -h | grep /nfs/ | SECTION_LOG
 	    ;;
     esac
 }
