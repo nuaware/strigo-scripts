@@ -5,6 +5,10 @@ POD_CIDR="192.168.0.0/16"
 
 #K8S_RELEASE="1.18.1"
 K8S_RELEASE="1.18.0"
+K8S_INSTALLER="kubeadm"
+
+#K8S_INSTALLER="rancher"
+#RANCHER_RKE_RELEASE="v1.0.6"
 
 #BIN=/root/bin
 BIN=/usr/local/bin
@@ -104,12 +108,15 @@ KUBEADM_INIT() { # USE $POD_CIDR
 }
 
 KUBEADM_JOIN() {
-
+    # TODO: to split - includes ssh ocnfig setup, /etc/hosts setup ...
     NUM_NODES=$($SCRIPT_DIR/get_workspaces_info.py -nodes)
 
     JOIN_COMMAND=$(kubeadm token create --print-join-command)
 
     let WORKER_NUM=NUM_NODES-NUM_MASTERS
+    echo "PRIVATE_IP master" | tee /tmp/hosts.add
+
+    echo; echo "-- performing join command on worker nodes"
     for WORKER in $(seq $WORKER_NUM); do
         let NODE_NUM=NUM_MASTERS+WORKER-1
         WORKER_NODE_NAME="worker$WORKER"
@@ -117,6 +124,19 @@ KUBEADM_JOIN() {
         WORKER_IPS=$($SCRIPT_DIR/get_workspaces_info.py -ips $NODE_NUM)
         WORKER_PRIVATE_IP=${WORKER_IPS%,*};
         WORKER_PUBLIC_IP=${WORKER_IPS#*,};
+
+	echo "$WORKER_PRIVATE_IP $WORKER_NODE_NAME" | tee -a /etc/hosts.add
+        mkdir -p ~/.ssh
+        mkdir -p /home/ubuntu/.ssh
+        touch /home/ubuntu/.ssh/config
+        chown ubuntu:ubuntu /home/ubuntu/.ssh/config
+	{
+            echo ""
+            echo "Host $WORKER_NODE_NAME"
+	    echo "    User     ubuntu"
+	    echo "    Hostname $WORKER_PRIVATE_IP"
+	    echo "    IdentityFile ~/.ssh/id_rsa"
+        } | tee -a ~/.ssh/config | tee -a /home/ubuntu/.ssh/config
 
         echo "WORKER[$WORKER]=NODE[$NODE_NUM] $WORKER_NODE_NAME WORKER_PRIVATE_IP=$WORKER_PRIVATE_IP WORKER_PUBLIC_IP=$WORKER_PUBLIC_IP"
 
@@ -127,6 +147,12 @@ KUBEADM_JOIN() {
         echo "-- $CMD"
         $CMD
         echo $WORKER_NODE_NAME | $_SSH_IP tee /tmp/NODE_NAME
+    done
+
+    echo; echo "-- setting up /etc/hosts"
+    cat /tmp/hosts.add >> /etc/hosts
+    for WORKER in $(seq $WORKER_NUM); do
+        ssh $WORKER_NODE_NAME "sudo cat /tmp/hosts.add >> /etc/hosts"
     done
 }
 
@@ -282,21 +308,66 @@ set_EVENT_WORKSPACE
     ERROR "NODE_IDX is unset"
 }
 
+INSTALL_KUBERNETES() {
+    case $K8S_INSTALLER in
+        "kubeadm")
+            SECTION KUBEADM_INIT
+            SECTION SETUP_KUBECONFIG
+            SECTION CNI_INSTALL
+            SECTION KUBEADM_JOIN
+            SECTION KUBECTL_VERSION
+        ;;
+        "rancher")
+            SECTION RANCHER_INIT
+        ;;
+        *)
+        ;;
+    esac
+}
+
+# TODO: setup NFS share across nodes
+# https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nfs-mount-on-ubuntu-18-04
+SETUP_NFS() {
+    NODE_TYPE=$1; shift
+
+    echo "Firewall(ufw status): $( ufw status )"
+
+    case $NODE_TYPE in
+        master)
+            apt-get install -y nfs-kernel-server
+	    mkdir -p /var/nfs/general /nfs
+	    chown nobody:nogroup /var/nfs/general
+
+	    for IP in WORKER_IPS; do
+                echo "/var/nfs/general    $PIP(rw,sync,no_subtree_check)"
+	        #/home       $PIP(rw,sync,no_root_squash,no_subtree_check)
+	    done | tee -a /etc/exports
+
+	    systemctl restart nfs-kernel-server
+	    ln -s /var/nfs/general /nfs/
+
+	    ;;
+        *)
+            apt-get install -y nfs-common
+	    mkdir -p /nfs/general
+	    mount master:/var/nfs/general /nfs/general
+	    ;;
+    esac
+}
+
 # Perform all kubeadm operations from Master1:
 if [ $NODE_IDX -eq 0 ] ; then
-    SECTION KUBEADM_INIT
-    SECTION SETUP_KUBECONFIG
-    SECTION CNI_INSTALL
-    SECTION KUBEADM_JOIN
-    SECTION KUBECTL_VERSION
+    SECTION INSTALL_KUBERNETES
     [ $INSTALL_KUBELAB -ne 0 ]        && SECTION INSTALL_KUBELAB
     [ $DOWNLOAD_PCC_TWISTLOCK -ne 0 ] && SECTION DOWNLOAD_PCC_TWISTLOCK
     [ $INSTALL_PCC_TWISTLOCK -ne 0 ]  && SECTION INSTALL_PCC_TWISTLOCK
     [ $INSTALL_TERRAFORM -ne 0 ]      && SECTION INSTALL_TERRAFORM
     [ $INSTALL_HELM -ne 0 ]           && SECTION INSTALL_HELM
+    SECTION SETUP_NFS master
 else
     while [ ! -f /tmp/NODE_NAME ]; do sleep 5; done
     NODE_NAME=$(cat /tmp/NODE_NAME)
+    SECTION SETUP_NFS worker
 fi
 
 [ ! -z "$REGISTER_URL" ] && SECTION REGISTER_INSTALL
