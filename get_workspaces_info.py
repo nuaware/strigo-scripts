@@ -4,7 +4,13 @@ import os, sys
 import requests, json
 import urllib.request
 
+def die(msg):
+    print("die: " + msg)
+    sys.exit(1)
+
 VERBOSE=os.getenv('VERBOSE', None)
+
+MISSING_ENV_VARS=[]
 
 ORG_ID=os.getenv('ORG_ID')
 API_KEY=os.getenv('API_KEY')
@@ -13,6 +19,15 @@ OWNER_ID_OR_EMAIL=os.getenv('OWNER_ID_OR_EMAIL')
 
 PRIVATE_IP=os.getenv('PRIVATE_IP')
 PUBLIC_IP=os.getenv('PUBLIC_IP')
+
+if ORG_ID            == None: MISSING_ENV_VARS.append('ORG_ID')
+if API_KEY           == None: MISSING_ENV_VARS.append('API_KEY')
+if OWNER_ID_OR_EMAIL == None: MISSING_ENV_VARS.append('OWNER_ID_OR_EMAIL')
+if PRIVATE_IP        == None: MISSING_ENV_VARS.append('PRIVATE_IP')
+if PUBLIC_IP         == None: MISSING_ENV_VARS.append('PUBLIC_IP')
+
+if len(MISSING_ENV_VARS) > 0:
+    die("Missing env var definitions: " + " ".join(MISSING_ENV_VARS))
 
 headers = {
     'Authorization': "Bearer " + ORG_ID + ":" + API_KEY,
