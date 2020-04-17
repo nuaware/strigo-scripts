@@ -49,24 +49,40 @@ ERROR() {
     echo "******************************************************"
 }
 
-[ -z "$API_KEY" ] && ERROR "API_KEY is unset"
-[ -z "$ORG_ID"  ] && ERROR "ORG_ID is unset"
-[ -z "$OWNER_ID_OR_EMAIL" ] && ERROR "OWNER_ID_OR_EMAIL is unset"P
+die() {
+    ERROR $*
+    echo "$0: die - Installation failed" >&2
+    echo $* >&2
+    exit 1
+}
+
+[ -z "$API_KEY" ] && die "API_KEY is unset"
+[ -z "$ORG_ID"  ] && die "ORG_ID is unset"
+[ -z "$OWNER_ID_OR_EMAIL" ] && die "OWNER_ID_OR_EMAIL is unset"P
 
 #export PRIVATE_IP=$(hostname -i)
 export PRIVATE_IP=$(ec2metadata --local-ipv4)
 export PUBLIC_IP=$(ec2metadata --public-ipv4)
 export NODE_NAME="unset"
 
-[ -z "$PRIVATE_IP" ] && ERROR "PRIVATE_IP is unset"P
-[ -z "$PUBLIC_IP"  ] && ERROR "PUBLIC_IP is unset"P
+[ -z "$PRIVATE_IP" ] && die "PRIVATE_IP is unset"P
+[ -z "$PUBLIC_IP"  ] && die "PUBLIC_IP is unset"P
 
 SCRIPT_DIR=$(dirname $0)
 
 echo "Checking for Events owned by '$OWNER_ID_OR_EMAIL'"
 
 set_EVENT_WORKSPACE_NODES() {
-    NUM_NODES=$($SCRIPT_DIR/get_workspaces_info.py -nodes)
+    [ -z "$NUM_NODES" ] && die "Expected number of nodes is not set/exported from invoking user-data script"
+
+    _NUM_NODES=$($SCRIPT_DIR/get_workspaces_info.py -nodes)
+    while [ $_NUM_NODES -lt $NUM_NODES ]; do
+        echo "[ '$_NUM_NODES' -lt '$NUM_NODES' ] - waiting for more nodes to become available ..."
+	sleep 2
+        _NUM_NODES=$($SCRIPT_DIR/get_workspaces_info.py -nodes)
+        [ -z "$_NUM_NODES" ] && _NUM_NODES=0
+    done
+
     let NUM_WORKERS=NUM_NODES-NUM_MASTERS
 
     NODE_IDX=$($SCRIPT_DIR/get_workspaces_info.py -idx)
@@ -303,11 +319,11 @@ DOWNLOAD_PCC_TWISTLOCK() {
 }
 
 REGISTER_INSTALL_START() {
-    wget -qO - "$REGISTER_URL/${EVENT}_${WORKSPACE}_${NODE_NAME}_${PUBLIC_IP}_provisionin_START"
+    wget -qO - "$REGISTER_URL/${EVENT}_${WORKSPACE}_${NODE_NAME}_${PUBLIC_IP}_provisioning_START"
 }
 
 REGISTER_INSTALL_END() {
-    wget -qO - "$REGISTER_URL/${EVENT}_${WORKSPACE}_${NODE_NAME}_${PUBLIC_IP}_provisionin_END"
+    wget -qO - "$REGISTER_URL/${EVENT}_${WORKSPACE}_${NODE_NAME}_${PUBLIC_IP}_provisioning_END"
 }
 
 SECTION() {
@@ -330,7 +346,7 @@ SECTION START_DOCKER_plus
 
 set_EVENT_WORKSPACE_NODES
 [ -z "$NODE_IDX"  ] && {
-    ERROR "NODE_IDX is unset"
+    die "NODE_IDX is unset"
 }
 
 INSTALL_KUBERNETES() {

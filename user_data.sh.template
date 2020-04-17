@@ -13,6 +13,8 @@ export ORG_ID="__ORG_ID__"
 export API_KEY="__API_KEY__"
 export OWNER_ID_OR_EMAIL="__OWNER_ID_OR_EMAIL__"
 
+export NUM_NODES=2 # Must match !!
+
 BOOT_SETUP_SH=setup_k8s_at_boot.sh
 
 wget -qO $DIR/$BOOT_SETUP_SH \
