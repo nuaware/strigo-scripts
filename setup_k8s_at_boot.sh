@@ -114,6 +114,9 @@ KUBEADM_INIT() { # USE $POD_CIDR
 CONFIG_NODES_ACCESS() {
     NUM_NODES=$($SCRIPT_DIR/get_workspaces_info.py -nodes)
 
+    let WORKER_NUM=NUM_NODES-NUM_MASTERS
+    echo "$PRIVATE_IP master" | tee /tmp/hosts.add
+
     WORKER_PRIVATE_IPS=""
     for WORKER in $(seq $WORKER_NUM); do
         WORKER_IPS=$($SCRIPT_DIR/get_workspaces_info.py -ips $NODE_NUM)
@@ -152,12 +155,7 @@ CONFIG_NODES_ACCESS() {
 }
 
 KUBEADM_JOIN() {
-    # TODO: to split - includes ssh ocnfig setup, /etc/hosts setup ...
-
     JOIN_COMMAND=$(kubeadm token create --print-join-command)
-
-    let WORKER_NUM=NUM_NODES-NUM_MASTERS
-    echo "$PRIVATE_IP master" | tee /tmp/hosts.add
 
     echo; echo "-- performing join command on worker nodes"
     for WORKER in $(seq $WORKER_NUM); do
