@@ -83,7 +83,7 @@ set_EVENT_WORKSPACE_NODES() {
     _NUM_NODES=$($SCRIPT_DIR/get_workspaces_info.py -nodes | tee -a $EVENT_LOG)
     while [ $_NUM_NODES -lt $NUM_NODES ]; do
         echo "[ '$_NUM_NODES' -lt '$NUM_NODES' ] - waiting for more nodes to become available ..."
-	sleep 2
+	sleep 5
         _NUM_NODES=$($SCRIPT_DIR/get_workspaces_info.py -nodes | tee -a $EVENT_LOG)
         [ -z "$_NUM_NODES" ] && _NUM_NODES=0
     done
@@ -189,7 +189,7 @@ CONFIG_NODES_ACCESS() {
     echo; echo "-- setting up /etc/hosts"
     cat /tmp/hosts.add >> /etc/hosts
     for WORKER in $(seq $NUM_WORKERS); do
-        ssh $WORKER_NODE_NAME "sudo cat /tmp/hosts.add >> /etc/hosts"
+        cat /tmp/hosts.add | ssh $WORKER_NODE_NAME "sudo tee -a /etc/hosts"
     done
 }
 
@@ -204,7 +204,7 @@ KUBEADM_JOIN() {
         CMD="ssh $WORKER_NODE_NAME sudo $JOIN_COMMAND --node-name $WORKER_NODE_NAME"
         echo "-- $CMD" | tee -a /tmp/SECTION.log
         $CMD
-        echo $WORKER_NODE_NAME | ssh $WORKER_NODE_NAME /tmp/NODE_NAME
+        echo $WORKER_NODE_NAME | ssh $WORKER_NODE_NAME tee /tmp/NODE_NAME
     done
     kubectl get nodes | SECTION_LOG
 }
@@ -403,16 +403,19 @@ SETUP_NFS() {
 	    mkdir -p /var/nfs/general /nfs
 	    chown nobody:nogroup /var/nfs/general
 
-	    for WIP in $WORKER_PRIVATE_IPS; do
-                echo "/var/nfs/general    $WIP(rw,sync,no_subtree_check)"
-	        #/home       $PIP(rw,sync,no_root_squash,no_subtree_check)
-	    done | tee -a /etc/exports
+            # for WIP in $WORKER_PRIVATE_IPS; do
+            for WORKER in $(seq $NUM_WORKERS); do
+                #echo "/var/nfs/general    $WIP(rw,sync,no_subtree_check)"
+                WORKER_NODE_NAME="worker$WORKER"
+                echo "/var/nfs/general    $WORKER_NODE_NAME(rw,sync,no_subtree_check)"
+                #/home       $PIP(rw,sync,no_root_squash,no_subtree_check)
+            done | tee -a /etc/exports
 
-	    systemctl restart nfs-kernel-server
-	    ln -s /var/nfs/general /nfs/
+            systemctl restart nfs-kernel-server
+            ln -s /var/nfs/general /nfs/
 
             ls -altrh /var/nfs/general | SECTION_LOG
-	    ;;
+            ;;
         *)
             apt-get install -y nfs-common
 	    mkdir -p /nfs/general
