@@ -155,7 +155,7 @@ CONFIG_NODES_ACCESS() {
         WORKER_IPS=$($SCRIPT_DIR/get_workspaces_info.py -ips $NODE_NUM)
         WORKER_PRIVATE_IP=${WORKER_IPS%,*};
         WORKER_PUBLIC_IP=${WORKER_IPS#*,};
-        WORKER_PRIVATE_IPS+="$WORKER_PRIVATE_IP"
+        WORKER_PRIVATE_IPS+=" $WORKER_PRIVATE_IP"
 	WORKER_NODE_NAME="worker$WORKER"
 	echo "$WORKER_PRIVATE_IP $WORKER_NODE_NAME" | tee -a /tmp/hosts.add | tee -a /tmp/SECTION.log
 
@@ -173,11 +173,6 @@ CONFIG_NODES_ACCESS() {
         } | tee -a /home/ubuntu/.ssh/config | sed 's?~?/root?' | tee -a ~/.ssh/config 
 
         echo "WORKER[$WORKER]=NODE[$NODE_NUM] $WORKER_NODE_NAME WORKER_PRIVATE_IP=$WORKER_PRIVATE_IP WORKER_PUBLIC_IP=$WORKER_PUBLIC_IP"
-
-        WORKER_IPS=$($SCRIPT_DIR/get_workspaces_info.py -ips $NODE_NUM)
-        WORKER_PRIVATE_IP=${WORKER_IPS%,*};
-        WORKER_PUBLIC_IP=${WORKER_IPS#*,};
-        WORKER_PRIVATE_IPS+="$WORKER_PRIVATE_IP"
 
 	_SSH_IP="sudo -u ubuntu ssh -o StrictHostKeyChecking=no $WORKER_PRIVATE_IP"
         while ! $_SSH_IP uptime; do sleep 2; echo "Waiting for successful $WORKER_NODE_NAME ssh conection ..."; done
