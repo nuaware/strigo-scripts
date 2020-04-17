@@ -184,8 +184,8 @@ CONFIG_NODES_ACCESS() {
 	_SSH_IP="sudo -u ubuntu ssh -o StrictHostKeyChecking=no $WORKER_PRIVATE_IP"
         while ! $_SSH_IP uptime; do sleep 2; echo "Waiting for successful Worker$WORKER ssh conection ..."; done
 
-	_SSH_ROOT_IP="ssh -u root -o StrictHostKeyChecking=no $WORKER_PRIVATE_IP"
-        $_SSH_IP uptime
+	_SSH_ROOT_IP="ssh -u ubuntu -o StrictHostKeyChecking=no $WORKER_PRIVATE_IP"
+        $_SSH_ROOT_IP uptime
     done
 
     echo; echo "-- setting up /etc/hosts"
@@ -204,10 +204,11 @@ KUBEADM_JOIN() {
 
         #CMD="$_SSH_IP sudo $JOIN_COMMAND --node-name $WORKER_NODE_NAME"
         CMD="ssh $WORKER_NODE_NAME sudo $JOIN_COMMAND --node-name $WORKER_NODE_NAME"
-        echo "-- $CMD"
+        echo "-- $CMD" | tee -a /tmp/SECTION.log
         $CMD
         echo $WORKER_NODE_NAME | ssh $WORKER_NODE_NAME /tmp/NODE_NAME
     done
+    SECTION_SUMMARY_OP=$(kubectl get nodes)
 }
 
 CNI_INSTALL() {
@@ -220,6 +221,7 @@ CNI_INSTALL() {
     kubectl get pods -n kube-system
 
     echo "NEED TO WAIT - HOW TO HANDLE failure ... need to restart coredns, other?"
+    SECTION_SUMMARY_OP=$(kubectl get nodes)
 }
 
 SETUP_KUBECONFIG() {
@@ -238,10 +240,12 @@ SETUP_KUBECONFIG() {
     echo "ubuntu: kubectl get nodes:"
     #sudo -u ubuntu KUBECONFIG=/home/ubuntu/.kube/config kubectl get nodes
     sudo -u ubuntu kubectl get nodes
+    SECTION_SUMMARY_OP=$(kubectl get nodes)
 }
 
 KUBECTL_VERSION() {
     kubectl version -o yaml
+    SECTION_SUMMARY_OP=$(kubectl version)
 }
 
 INSTALL_KUBELAB() {
@@ -370,13 +374,9 @@ INSTALL_KUBERNETES() {
         "kubeadm")
             SECTION KUBEADM_INIT
             SECTION SETUP_KUBECONFIG
-	    SECTION_SUMMARY_OP=$(kubectl get nodes)
             SECTION CNI_INSTALL
-	    SECTION_SUMMARY_OP=$(kubectl get nodes)
             SECTION KUBEADM_JOIN
-	    SECTION_SUMMARY_OP=$(kubectl get nodes)
             SECTION KUBECTL_VERSION
-	    SECTION_SUMMARY_OP=$(kubectl version)
         ;;
         "rancher")
             SECTION RANCHER_INIT
