@@ -190,8 +190,8 @@ CONFIG_NODES_ACCESS() {
         $_SSH_ROOT_IP uptime
 
 	{
-	    echo -n "From ubuntu to ubuntu@$WORKER_NODE_NAME: hostname=$($_SSH_IP      hostname)"; 
-	    echo -n "From   root to ubuntu@$WORKER_NODE_NAME: hostname=$($_SSH_ROOT_IP hostname)";
+	    echo "From ubuntu to ubuntu@$WORKER_NODE_NAME: hostname=$($_SSH_IP      hostname)"; 
+	    echo "From   root to ubuntu@$WORKER_NODE_NAME: hostname=$($_SSH_ROOT_IP hostname)";
 	} | tee -a /tmp/SECTION.log
     done
 
