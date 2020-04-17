@@ -280,9 +280,12 @@ DOWNLOAD_PCC_TWISTLOCK() {
     wget -O $TAR $URL
 }
 
+REGISTER_INSTALL_START() {
+    wget -qO - "$REGISTER_URL/${EVENT}_${WORKSPACE}_${NODE_NAME}_${PUBLIC_IP}_provisionin_START"
+}
 
-REGISTER_INSTALL() {
-    wget -qO - "$REGISTER_URL/${EVENT}_${WORKSPACE}_${NODE_NAME}_${PUBLIC_IP}"
+REGISTER_INSTALL_END() {
+    wget -qO - "$REGISTER_URL/${EVENT}_${WORKSPACE}_${NODE_NAME}_${PUBLIC_IP}_provisionin_END"
 }
 
 SECTION() {
@@ -355,6 +358,8 @@ SETUP_NFS() {
     esac
 }
 
+[ ! -z "$REGISTER_URL" ] && SECTION REGISTER_INSTALL_START
+
 # Perform all kubeadm operations from Master1:
 if [ $NODE_IDX -eq 0 ] ; then
     SECTION INSTALL_KUBERNETES
@@ -370,7 +375,7 @@ else
     SECTION SETUP_NFS worker
 fi
 
-[ ! -z "$REGISTER_URL" ] && SECTION REGISTER_INSTALL
+[ ! -z "$REGISTER_URL" ] && SECTION REGISTER_INSTALL_END
 
 
 
