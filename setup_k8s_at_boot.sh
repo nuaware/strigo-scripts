@@ -307,15 +307,15 @@ UNPACK_TAR() {
 CREATE_CONSOLE() {
     echo; echo "---- Creating Prisma Console"
 
+set -x
     #./linux/twistcli console export kubernetes --service-type LoadBalancer
 env | grep TW_A_K
 . /root/.profile
 env | grep TW_A_K
     [ ! -z "$TW_A_K" ] && TW_CONS_OPTS="--registry-token $TW_A_K"
 
-set -x
     ./linux/twistcli console export kubernetes $TW_CONS_OPTS --service-type NodePort
-set +x
+#set +x
 
     ls          -altr twistlock_console.yaml
     kubectl create -f twistlock_console.yaml
