@@ -315,7 +315,8 @@ set -x
     #[ ! -z "$TW_A_K" ] && TW_CONS_OPTS="--registry-token $TW_A_K"
     export TW_CONS_OPTS="--registry-token $TW_A_K"
 
-    ./linux/twistcli console export kubernetes $TW_CONS_OPTS --service-type NodePort
+    ./linux/twistcli console export kubernetes --registry-token "$TW_A_K" --service-type NodePort
+    #./linux/twistcli console export kubernetes $TW_CONS_OPTS --service-type NodePort
 #set +x
 
     [ ! -f twistlock_console.yaml ] && die "Failed to export console manifest"
