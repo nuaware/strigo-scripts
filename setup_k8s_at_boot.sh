@@ -308,6 +308,9 @@ CREATE_CONSOLE() {
     echo; echo "---- Creating Prisma Console"
 
     #./linux/twistcli console export kubernetes --service-type LoadBalancer
+env | grep TW_A_K
+. /root/.profile
+env | grep TW_A_K
     [ ! -z "$TW_A_K" ] && TW_CONS_OPTS="--registry-token $TW_A_K"
 
 set -x
