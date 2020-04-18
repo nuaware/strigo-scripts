@@ -291,6 +291,9 @@ INSTALL_PCC_TWISTLOCK() {
 
 TAR=/tmp/prisma_cloud_compute_edition_20_04_163.tar.gz
 
+PUBLIC_HOST=$(ec2metadata --public-host)
+ADMIN_USER="admin"
+
 die() {
     echo "$0: die - $*" >&2 | tee -a /tmp/SECTION.log
     exit 1
@@ -366,6 +369,42 @@ metadata:
     kubectl create -f /tmp/twistlock-pv.yaml
 }
 
+GET_ADMIN_NODE_PORT() {
+    kubectl -n twistlock get all
+
+    kubectl get service -n twistlock
+    #kubectl get service -w -n twistlock
+    #NAME                TYPE           CLUSTER-IP    EXTERNAL-IP   PORT(S)                         AGE
+    #twistlock-console   LoadBalancer   10.111.3.10   <pending>     8084:30357/TCP,8083:31707/TCP   27m
+
+    kubectl get service -o wide -n twistlock
+    kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*]
+    #kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*]
+    kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*] | tee -a /tmp/SECTION.log
+
+    NODE_PORTS=$(kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*].nodePort --no-headers)
+    echo NODE_PORTS=$NODE_PORTS
+
+    MASTER_PUBLIC_IP=$(ec2metadata --public-ipv4)
+    echo MASTER_PUBLIC_IP=$MASTER_PUBLIC_IP
+
+    PORT1=${NODE_PORTS%,*}
+    PORT2=${NODE_PORTS#*,}
+    #echo commication URL=https://${MASTER_PUBLIC_IP}:${PORT1}
+
+    #echo Management URL=https://${MASTER_PUBLIC_IP}:${PORT2}
+    echo Management URL=https://${PUBLIC_HOST}:${PORT2}
+    ADMIN_NODE_PORT=$PORT2
+
+    #$ kubectl get service -o wide -n twistlock
+    #NAME                TYPE           CLUSTER-IP    EXTERNAL-IP   PORT(S)                         AGE   SELECTOR
+    #twistlock-console   LoadBalancer   10.111.3.10   <pending>     8084:30357/TCP,8083:31707/TCP   27m   name=twistlock-console
+
+    # Enter access token (required for pulling the Console image):
+    # Neither storage class nor persistent volume labels were provided, using cluster default behavior
+    # Saving output file to /home/ubuntu/twistlock/twistlock_console.yaml
+}
+
 ping -c 1 registry-auth.twistlock.com || { die " Cant reach registry"; }
 
 mkdir -p /root/twistlock
@@ -374,38 +413,28 @@ cd       /root/twistlock
 UNPACK_TAR
 CREATE_PV
 CREATE_CONSOLE
+GET_ADMIN_NODE_PORT
 
-kubectl -n twistlock get all
+cat > /tmp/create_defender.sh <<INNER_EOF
 
-kubectl get service -n twistlock
-#kubectl get service -w -n twistlock
-#NAME                TYPE           CLUSTER-IP    EXTERNAL-IP   PORT(S)                         AGE
-#twistlock-console   LoadBalancer   10.111.3.10   <pending>     8084:30357/TCP,8083:31707/TCP   27m
+CREATE_DEFENDER() {
+    PUBLIC_HOST=$(ec2metadata --public-host)
+    ADMIN_USER="admin"
 
-kubectl get service -o wide -n twistlock
-kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*]
-#kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*]
-kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*] | tee -a /tmp/SECTION.log
+    ./linux/twistcli defender export kubernetes --address https://${PUBLIC_HOST}:${ADMIN_NODE_PORT} --user $ADMIN_USER --cluster-address twistlock-console
+}
 
-NODE_PORTS=$(kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*].nodePort --no-headers)
-echo NODE_PORTS=$NODE_PORTS
+#GET_ADMIN_NODE_PORT
 
-MASTER_PUBLIC_IP=$(ec2metadata --public-ipv4)
-echo MASTER_PUBLIC_IP=$MASTER_PUBLIC_IP
+ADMIN_NODE_PORT=$ADMIN_NODE_PORT
+CREATE_DEFENDER
 
-PORT1=${NODE_PORTS%,*}
-PORT2=${NODE_PORTS#*,}
-#echo commication URL=https://${MASTER_PUBLIC_IP}:${PORT1}
+INNER_EOF
 
-echo Management URL=https://${MASTER_PUBLIC_IP}:${PORT2}
-
-#$ kubectl get service -o wide -n twistlock
-#NAME                TYPE           CLUSTER-IP    EXTERNAL-IP   PORT(S)                         AGE   SELECTOR
-#twistlock-console   LoadBalancer   10.111.3.10   <pending>     8084:30357/TCP,8083:31707/TCP   27m   name=twistlock-console
-
-# Enter access token (required for pulling the Console image):
-# Neither storage class nor persistent volume labels were provided, using cluster default behavior
-# Saving output file to /home/ubuntu/twistlock/twistlock_console.yaml
+    echo
+    echo "==== /tmp/create_defender must be run manually after creation of admin account (via console)"
+    chmod +x /tmp/create_defender.sh
+    # /tmp/create_defender.sh
 
 EOF
 
