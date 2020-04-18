@@ -54,7 +54,7 @@ ERROR() {
 
 die() {
     ERROR $*
-    echo "$0: die - Installation failed" >&2
+    echo "$0: die - Installation failed" >&2 | SECTION_LOG
     echo $* >&2
     exit 1
 }
@@ -111,7 +111,7 @@ START_DOCKER_plus() {
 
     groupadd docker
     usermod -aG docker ubuntu
-    { echo "ubuntu: docker ps"; sudo -u ubuntu docker ps; } | tee -a /tmp/SECTION.log
+    { echo "ubuntu: docker ps"; sudo -u ubuntu docker ps; } | SECTION_LOG
     echo "ubuntu: docker version"; sudo -i docker version
     #newgrp docker
 }
@@ -158,7 +158,7 @@ CONFIG_NODES_ACCESS() {
         WORKER_PUBLIC_IP=${WORKER_IPS#*,};
         WORKER_PRIVATE_IPS+=" $WORKER_PRIVATE_IP"
 	WORKER_NODE_NAME="worker$WORKER"
-	echo "$WORKER_PRIVATE_IP $WORKER_NODE_NAME" | tee -a /tmp/hosts.add | tee -a /tmp/SECTION.log
+	echo "$WORKER_PRIVATE_IP $WORKER_NODE_NAME" | tee -a /tmp/hosts.add | SECTION_LOG
 
         mkdir -p ~/.ssh
         mkdir -p /home/ubuntu/.ssh
@@ -184,7 +184,7 @@ CONFIG_NODES_ACCESS() {
 	{
 	    echo "From ubuntu to ubuntu@$WORKER_NODE_NAME: hostname=$($_SSH_IP      hostname)"; 
 	    echo "From   root to ubuntu@$WORKER_NODE_NAME: hostname=$($_SSH_ROOT_IP hostname)";
-	} | tee -a /tmp/SECTION.log
+	} | SECTION_LOG
     done
 
     echo; echo "-- setting up /etc/hosts"
@@ -203,7 +203,7 @@ KUBEADM_JOIN() {
 
         #CMD="$_SSH_IP sudo $JOIN_COMMAND --node-name $WORKER_NODE_NAME"
         CMD="ssh $WORKER_NODE_NAME sudo $JOIN_COMMAND --node-name $WORKER_NODE_NAME"
-        echo "-- $CMD" | tee -a /tmp/SECTION.log
+        echo "-- $CMD" | SECTION_LOG
         $CMD
         echo $WORKER_NODE_NAME | ssh $WORKER_NODE_NAME tee /tmp/NODE_NAME
     done
@@ -292,7 +292,7 @@ INSTALL_PCC_TWISTLOCK() {
 TAR=/tmp/prisma_cloud_compute_edition_20_04_163.tar.gz
 
 die() {
-    echo "$0: die - $*" >&2
+    echo "$0: die - $*" >&2 | tee -a /tmp/SECTION.log
     exit 1
 }
 
@@ -480,7 +480,7 @@ SECTION_LOG() {
 SECTION() {
     SECTION="$*"
 
-    echo; echo "== [$(date)] ========== $SECTION =================================" | tee -a /tmp/SECTION.log
+    echo; echo "== [$(date)] ========== $SECTION =================================" | SECTION_LOG
     $*
 }
 
