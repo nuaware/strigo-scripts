@@ -307,15 +307,18 @@ UNPACK_TAR() {
 CREATE_CONSOLE() {
     echo; echo "---- Creating Prisma Console"
 
+    . /root/.profile
 set -x
     #./linux/twistcli console export kubernetes --service-type LoadBalancer
-env | grep TW_A_K
-. /root/.profile
-env | grep TW_A_K
-    [ ! -z "$TW_A_K" ] && TW_CONS_OPTS="--registry-token $TW_A_K"
+    #env | grep TW_A_K
+    env | grep TW_A_K
+    #[ ! -z "$TW_A_K" ] && TW_CONS_OPTS="--registry-token $TW_A_K"
+    export TW_CONS_OPTS="--registry-token $TW_A_K"
 
     ./linux/twistcli console export kubernetes $TW_CONS_OPTS --service-type NodePort
 #set +x
+
+    [ ! -f twistlock_console.yaml ] && die "Failed to export console manifest"
 
     ls          -altr twistlock_console.yaml
     kubectl create -f twistlock_console.yaml
@@ -381,6 +384,7 @@ kubectl get service -n twistlock
 kubectl get service -o wide -n twistlock
 kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*]
 #kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*]
+kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*] | tee -a /tmp/SECTION.log
 
 NODE_PORTS=$(kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*].nodePort --no-headers)
 echo NODE_PORTS=$NODE_PORTS
@@ -430,9 +434,7 @@ INSTALL_HELM() {
 
     #helm search hub traefik
     #helm install hub stable/traefik
-
-
-
+    ls -altrh $BIN/helm | SECTION_LOG
 }
 
 INSTALL_TERRAFORM() {
@@ -445,6 +447,7 @@ INSTALL_TERRAFORM() {
 
     mkdir -p   $BIN/
     unzip $ZIP -d $BIN terraform
+    ls -altrh $BIN/terraform | SECTION_LOG
 }
 
 DOWNLOAD_PCC_TWISTLOCK() {
@@ -535,6 +538,7 @@ SETUP_NFS() {
             systemctl restart nfs-kernel-server
             ln -s /var/nfs/general /nfs/
 
+            df -h     /var/nfs/general | SECTION_LOG
             ls -altrh /var/nfs/general | SECTION_LOG
             ;;
         *)
