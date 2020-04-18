@@ -20,8 +20,9 @@ INSTALL_KUBELAB=1
 
 # TODO: move to user-data: (only download for workshops)
 DOWNLOAD_PCC_TWISTLOCK=1
-INSTALL_PCC_TWISTLOCK=0
-[ ! -z "$TW_A_K" ] && echo "export TW_A_K=$TW_A_K" >> /root/.profile
+INSTALL_PCC_TWISTLOCK=1
+[ $INSTALL_PCC_TWISTLOCK -eq 0 ] &&
+    [ ! -z "$TW_A_K" ] && echo "export TW_A_K=$TW_A_K" >> /root/.profile
 
 # Terraform
 INSTALL_TERRAFORM=1
@@ -284,7 +285,124 @@ EOF
 }
 
 INSTALL_PCC_TWISTLOCK() {
-    echo TODO
+
+    cat > /tmp/install_pcc.sh <<EOF
+#!/bin/bash
+
+TAR=/tmp/prisma_cloud_compute_edition_20_04_163.tar.gz
+
+die() {
+    echo "$0: die - $*" >&2
+    exit 1
+}
+
+[ `id -un` != 'root' ] && die "$0: run as root"
+
+UNPACK_TAR() {
+    echo; echo "---- Unpacking tar [$TAR] -----"
+
+    tar xvzf $TAR  -C ~/twistlock
+}
+
+CREATE_CONSOLE() {
+    echo; echo "---- Creating Prisma Console"
+
+    #./linux/twistcli console export kubernetes --service-type LoadBalancer
+    [ ! -z "$TW_A_K" ] && TW_CONS_OPTS="--registry-token $TW_A_K"
+
+set -x
+    ./linux/twistcli console export kubernetes $TW_CONS_OPTS --service-type NodePort
+set +x
+
+    ls          -altr twistlock_console.yaml
+    kubectl create -f twistlock_console.yaml
+}
+
+CREATE_PV() {
+    echo; echo "---- Creating Prisma Console PV"
+
+    mkdir -p /nfs/general/twistlock-pv
+    chmod 777 /nfs/general/twistlock-pv/
+    cat > /tmp/twistlock-pv.yaml <<YAML_EOF
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+    name: twistlock-pv
+    labels:
+        type: local
+spec:
+    capacity:
+        storage: 100Gi
+    accessModes:
+    - ReadWriteMany
+    - ReadWriteOnce
+    hostPath:
+        path: "/nfs/general/twistlock-pv"
+YAML_EOF
+
+    MISSING='
+    annotations:
+        volume.beta.kubernetes.io/mount-options: "nolock,noatime,bg"
+	'
+
+    PCC_REC='
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+    name: twistlock-console
+    labels:
+        app-volume: twistlock-console
+    annotations:
+        volume.beta.kubernetes.io/mount-options: "nolock,noatime,bg"
+'
+
+    kubectl create -f /tmp/twistlock-pv.yaml
+}
+
+ping -c 1 registry-auth.twistlock.com || { die " Cant reach registry"; }
+
+mkdir -p /root/twistlock
+cd       /root/twistlock
+
+UNPACK_TAR
+CREATE_PV
+CREATE_CONSOLE
+
+kubectl -n twistlock get all
+
+kubectl get service -n twistlock
+#kubectl get service -w -n twistlock
+#NAME                TYPE           CLUSTER-IP    EXTERNAL-IP   PORT(S)                         AGE
+#twistlock-console   LoadBalancer   10.111.3.10   <pending>     8084:30357/TCP,8083:31707/TCP   27m
+
+kubectl get service -o wide -n twistlock
+kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*]
+#kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*]
+
+NODE_PORTS=$(kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*].nodePort --no-headers)
+echo NODE_PORTS=$NODE_PORTS
+
+MASTER_PUBLIC_IP=$(ec2metadata --public-ipv4)
+echo MASTER_PUBLIC_IP=$MASTER_PUBLIC_IP
+
+PORT1=${NODE_PORTS%,*}
+PORT2=${NODE_PORTS#*,}
+#echo commication URL=https://${MASTER_PUBLIC_IP}:${PORT1}
+
+echo Management URL=https://${MASTER_PUBLIC_IP}:${PORT2}
+
+#$ kubectl get service -o wide -n twistlock
+#NAME                TYPE           CLUSTER-IP    EXTERNAL-IP   PORT(S)                         AGE   SELECTOR
+#twistlock-console   LoadBalancer   10.111.3.10   <pending>     8084:30357/TCP,8083:31707/TCP   27m   name=twistlock-console
+
+# Enter access token (required for pulling the Console image):
+# Neither storage class nor persistent volume labels were provided, using cluster default behavior
+# Saving output file to /home/ubuntu/twistlock/twistlock_console.yaml
+
+EOF
+
+    chmod +x /tmp/install_pcc.sh
+    /tmp/install_pcc.sh
 }
 
 INSTALL_HELM() {
