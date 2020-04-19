@@ -5,6 +5,9 @@ SCRIPT_DIR=$(dirname $0)
 UPGRADE_KUBE_LATEST=0
 UPGRADE_KUBE_LATEST=1
 
+# To force a specific version, e.g. "stable-1" or "v1.18.2" set to version here and set UPGRADE_KUBE_LATEST=1
+KUBERNETES_VERSION=""
+
 export PRISMA_PCC_TAR=/tmp/prisma_cloud_compute_edition_20_04_163.tar.gz
 export TW_A_K
 INSTALL_PCC_SH_URL=https://raw.githubusercontent.com/mjbright/strigo-scripts/master/install_pcc.sh
@@ -188,8 +191,7 @@ KUBEADM_INIT() { # USE $POD_CIDR
     sudo hostnamectl set-hostname $NODE_NAME
     echo "local hostname=$(hostname)" | SECTION_LOG
 
-    KUBERNETES_VERSION=""
-    [ $UPGRADE_KUBE_LATEST -eq 1 ] &&
+    [ $UPGRADE_KUBE_LATEST -eq 1 ] && [ -z "$KUBERNETES_VERSION=" ] &&
         KUBERNETES_VERSION="--kubernetes-version $(kubeadm version -o short)"
 
     kubeadm init #KUBERNETES_VERSION --node-name $NODE_NAME \
@@ -548,12 +550,12 @@ FINISH() {
     BAD_PODS=$(kubectl get pods -A --no-headers | grep -v Running | wc -l)
     MAX_LOOPS=10; LOOP=0;
     while [ $BAD_PODS -ne 0 ]; do
-	echo "Waiting for remaining Pods to be running"
+	echo "Waiting for remaining Pods to be running" | SECTION_LOG
         let LOOP=LOOP+1; sleep 12; [ $LOOP -ge $MAX_LOOP ] && die "Failed waiting for remaining Pods"
 
         #kubectl get pods -A -o json | jq '.items[] | select(.status.reason!=null)' 
         #BAD_PODS=$(kubectl get pods -A -o json | jq '.items[] | select(.status.reason!=null)' | wc -l)
-        kubectl get pods -A --no-headers | grep -v Running
+        kubectl get pods -A --no-headers | grep -v Running | SECTION_LOG
         BAD_PODS=$(kubectl get pods -A --no-headers | grep -v Running | wc -l)
    done
 }
