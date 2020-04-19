@@ -153,7 +153,7 @@ START_DOCKER_plus() {
     groupadd docker
     usermod -aG docker ubuntu
     #{ echo "ubuntu: docker ps"; sudo -u ubuntu docker ps; } | SECTION_LOG
-    docker version -f "Docker Version Client={{.Client.Version}} Server={{.Server.Version}}"
+    docker version -f "Docker Version Client={{.Client.Version}} Server={{.Server.Version}}" | SECTION_LOG
     echo "ubuntu: docker version"; sudo -i docker version
     # newgrp docker # In shell allow immediate joining of group / use of docker
 }
@@ -249,7 +249,7 @@ EACH_NODE() {
 	WORKER_NODE_NAME="worker$WORKER"
         #eval ssh $WORKER_NODE_NAME $*
         #CMD="ssh $WORKER_NODE_NAME $*"
-        eval CMD="$*"
+        eval CMD="\"$*\""
         #ssh $WORKER_NODE_NAME "eval $CMD"
         ssh $WORKER_NODE_NAME "$CMD"
 	#eval $CMD
