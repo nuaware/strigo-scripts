@@ -313,12 +313,13 @@ SETUP_KUBECONFIG() {
     echo "ubuntu: kubectl get nodes:"
     #sudo -u ubuntu KUBECONFIG=/home/ubuntu/.kube/config kubectl get nodes
     sudo -u ubuntu kubectl get nodes
-    kubectl get nodes | SECTION_LOG
+
+    ls -altr /root/.kube/config /home/ubuntu/.kube/config | SECTION_LOG
 }
 
 KUBECTL_VERSION() {
     kubectl version -o yaml
-    kubectl version | SECTION_LOG
+    kubectl version --short | SECTION_LOG
 }
 
 INSTALL_KUBELAB() {
@@ -356,6 +357,8 @@ EOF
 
     chmod +x /tmp/kubelab.sh
     /tmp/kubelab.sh
+
+    kubectl -n kubelab get pods | SECTION_LOG
 }
 
 INSTALL_PCC_TWISTLOCK() {
@@ -388,13 +391,10 @@ UNPACK_TAR() {
 
     tar xvzf $TAR  -C ~/twistlock
 
-    echo
-    echo "---- Removing tar file to win back disk space:"
-    df -h /
-    echo "rm  -f $TAR"
-    rm  -f $TAR
-    df -h /
+    { echo; echo "---- Removing tar file to win back disk space:";
+    df -h / ; echo "rm  -f $TAR"; rm  -f $TAR; df -h /;
     echo "----"
+    } | SECTION_LOG
 }
 
 CREATE_CONSOLE() {
