@@ -249,12 +249,12 @@ EACH_NODE() {
 }
 
 KUBEADM_JOIN() {
-    JOIN_COMMAND=$(kubeadm token create --print-join-command)
+    JOIN_COMMAND=$(kubeadm token create --print-join-command --node-name $WORKER_NODE_NAME)
 
     echo; echo "-- performing join command on worker nodes"
 
-    EACH_NODE 'sudo $JOIN_COMMAND --node-name $WORKER_NODE_NAME; echo $WORKER_NODE_NAME > /tmp/NODE_NAME'
-    EACH_NODE 'ls -altr /tmp/NODE_NAME; cat /tmp/NODE_NAME'
+    EACH_NODE 'sudo $JOIN_COMMAND'
+    EACH_NODE 'echo $WORKER_NODE_NAME > /tmp/NODE_NAME; ls -altr /tmp/NODE_NAME; cat /tmp/NODE_NAME' | SECTION_LOG
 
     #for WORKER in $(seq $NUM_WORKERS); do
     #    WORKER_NODE_NAME="worker$WORKER"
