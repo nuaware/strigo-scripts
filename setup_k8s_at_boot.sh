@@ -346,7 +346,7 @@ chown ubuntu:ubuntu /home/ubuntu/.kube/config.kubelab
 kubectl create ns kubelab 
 kubectl -n kubelab create configmap kube-configmap --from-file=/home/ubuntu/.kube/config.kubelab
 
-kubectl create -f /root/github.com/kubelab/kubelab.yaml | SECTION_LOG
+kubectl create -f /root/github.com/kubelab/kubelab.yaml
 
 kubectl -n kubelab get cm
 kubectl -n kubelab get pods -o wide | grep " Running " || sleep 10
