@@ -241,10 +241,10 @@ EACH_NODE() {
     for WORKER in $(seq $NUM_WORKERS); do
 	WORKER_NODE_NAME="worker$WORKER"
         #eval ssh $WORKER_NODE_NAME $*
-        eval CMD="ssh $WORKER_NODE_NAME $*"
-
-	# Echo to stderr in case we use output of this function  ...
-	$CMD
+        #CMD="ssh $WORKER_NODE_NAME $*"
+        CMD="$*"
+        ssh $WORKER_NODE_NAME "eval $CMD"
+	#eval $CMD
     done
 }
 
@@ -715,6 +715,6 @@ echo "$exp_PS1" >> /root/.bashrc
 [ ! -z "$REGISTER_URL" ] && SECTION REGISTER_INSTALL_END
 
 SECTION FINISH
-TIMER_STOP "$0: "
+TIMER_STOP "$0: " | SECTION_LOG
 SECTION_LOG "$0: exit 0"
 
