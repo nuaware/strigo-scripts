@@ -188,8 +188,13 @@ KUBEADM_INIT() { # USE $POD_CIDR
     sudo hostnamectl set-hostname $NODE_NAME
     echo "local hostname=$(hostname)" | SECTION_LOG
 
-    kubeadm init --node-name $NODE_NAME --pod-network-cidr=$POD_CIDR --kubernetes-version=$K8S_RELEASE \
-                 --apiserver-cert-extra-sans=$PUBLIC_IP | \
+    KUBERNETES_VERSION=""
+    [ $UPGRADE_KUBE_LATEST -eq 1 ] &&
+        KUBERNETES_VERSION="--kubernetes-version $(kubeadm version -o short)"
+
+    kubeadm init #KUBERNETES_VERSION --node-name $NODE_NAME \
+            --pod-network-cidr=$POD_CIDR --kubernetes-version=$K8S_RELEASE \
+            --apiserver-cert-extra-sans=$PUBLIC_IP | \
         tee /tmp/kubeadm-init.out
     #kubeadm init | tee /tmp/kubeadm-init.out
     kubectl get nodes | SECTION_LOG
