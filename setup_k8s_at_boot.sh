@@ -458,16 +458,33 @@ GET_ADMIN_NODE_PORT
 
 cat > /tmp/create_defender.sh <<INNER_EOF
 
+SECTION_LOG() {
+    if [ -z "$1" ]; then
+        tee -a ${SECTION_LOG}
+    else
+        echo "$*" >> ${SECTION_LOG}
+    fi
+}
+
 CREATE_DEFENDER() {
-    PUBLIC_HOST=$(ec2metadata --public-host)
+    PUBLIC_HOST=\$(ec2metadata --public-host)
     ADMIN_USER="admin"
 
-    ./linux/twistcli defender export kubernetes --address https://${PUBLIC_HOST}:${ADMIN_NODE_PORT} --user $ADMIN_USER --cluster-address twistlock-console
+    ./linux/twistcli defender export kubernetes --address https://\${PUBLIC_HOST}:\${ADMIN_NODE_PORT} --user \$ADMIN_USER --cluster-address twistlock-console
+
+    [ ! -f defender.yaml ] && die "Failed to export defender manifest"
+
+    kubectl create -f defender.yaml | SECTION_LOG
 }
+
+[ `id -un` != 'root' ] && die "$0: run as root"
+
+cd /root/twistlock
 
 #GET_ADMIN_NODE_PORT
 
 ADMIN_NODE_PORT=$ADMIN_NODE_PORT
+ADMIN_NODE_PORT=\$ADMIN_NODE_PORT
 CREATE_DEFENDER
 
 INNER_EOF
