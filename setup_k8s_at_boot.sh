@@ -334,7 +334,7 @@ SETUP_KUBECONFIG() {
 
 KUBECTL_VERSION() {
     kubectl version -o yaml
-    echo "kubectl version: $(kubectl version --short)" | SECTION_LOG
+    echo "kubectl version: $(kubectl version --short)" | tr '\n' ',' | sed 's/,/ /g' | SECTION_LOG
 }
 
 INSTALL_KUBELAB() {
@@ -686,7 +686,7 @@ SETUP_NFS() {
 
             df -h     /var/nfs/general | SECTION_LOG
             ls -altrh /var/nfs/general | SECTION_LOG
-	    date >> /var/nfs/general/MOUNTED_from_NODE_$(hostname).txt
+	    date >> /nfs/general/MOUNTED_from_NODE_$(hostname).txt
             ;;
         *)
             apt-get install -y nfs-common
@@ -702,7 +702,7 @@ SETUP_NFS() {
 
             df -h | grep /nfs/     | SECTION_LOG
             ls -alrh /nfs/general/ | SECTION_LOG
-	    date >> /var/nfs/general/MOUNTED_from_NODE_$(hostname).txt
+	    date >> /nfs/general/MOUNTED_from_NODE_$(hostname).txt
 	    ;;
     esac
 }
