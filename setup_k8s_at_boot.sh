@@ -718,6 +718,9 @@ if [ $NODE_IDX -eq 0 ] ; then
     [ $INSTALL_TERRAFORM -ne 0 ]      && SECTION INSTALL_TERRAFORM
     [ $INSTALL_HELM -ne 0 ]           && SECTION INSTALL_HELM
 else
+    let NUM_WORKERS=NUM_NODES-NUM_MASTERS
+    [ $NUM_MASTERS -gt 1 ] && die "Not implemented NUM_MASTERS > 1"
+
     while [ ! -f /tmp/NODE_NAME ]; do sleep 5; done
     NODE_NAME=$(cat /tmp/NODE_NAME)
     SECTION SETUP_NFS worker on $NODE_NAME
