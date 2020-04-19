@@ -548,7 +548,7 @@ FINISH() {
         BAD_PODS=$(kubectl get pods -A --no-headers | grep -v Running | wc -l)
     done
 
-    { echo; echo "----"; kubectl get pods -n twistlock
+    { echo; echo "----"; kubectl get pods -n twistlock; kubectl get pods -n kubelab
       echo; echo "----"; echo "Connect to Console at [cat /tmp/PCC.console.url]:"; cat /tmp/PCC.console.url
     } | SECTION_LOG
 }
