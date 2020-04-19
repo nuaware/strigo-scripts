@@ -1,5 +1,7 @@
 #!/bin/bash
 
+SCRIPT_DIR=$(dirname $0)
+
 CNI_YAMLS="https://docs.projectcalico.org/manifests/calico.yaml"
 POD_CIDR="192.168.0.0/16"
 
@@ -76,21 +78,38 @@ die() {
     exit 1
 }
 
-[ -z "$API_KEY" ] && die "API_KEY is unset"
-[ -z "$ORG_ID"  ] && die "ORG_ID is unset"
-[ -z "$OWNER_ID_OR_EMAIL" ] && die "OWNER_ID_OR_EMAIL is unset"P
+# START: TIMER FUNCTIONS ================================================
 
-#export PRIVATE_IP=$(hostname -i)
-export PRIVATE_IP=$(ec2metadata --local-ipv4)
-export PUBLIC_IP=$(ec2metadata --public-ipv4)
-export NODE_NAME="unset"
+TIMER_START() {
+    START_S=`date +%s`
+}
 
-[ -z "$PRIVATE_IP" ] && die "PRIVATE_IP is unset"P
-[ -z "$PUBLIC_IP"  ] && die "PUBLIC_IP is unset"P
+TIMER_STOP() {
+    END_S=`date +%s`
+    let TOOK=END_S-START_S
 
-SCRIPT_DIR=$(dirname $0)
+    TIMER_hhmmss $TOOK
+    echo "$*Took $TOOK secs [${HRS}h${MINS}m${SECS}]"
+}
 
-echo "Checking for Events owned by '$OWNER_ID_OR_EMAIL'"
+TIMER_hhmmss() {
+    _REM_SECS=$1; shift
+
+    let SECS=_REM_SECS%60
+
+    let _REM_SECS=_REM_SECS-SECS
+
+    let MINS=_REM_SECS/60%60
+
+    let _REM_SECS=_REM_SECS-60*MINS
+
+    let HRS=_REM_SECS/3600
+
+    [ $SECS -lt 10 ] && SECS="0$SECS"
+    [ $MINS -lt 10 ] && MINS="0$MINS"
+}
+
+# END: TIMER FUNCTIONS ================================================
 
 set_EVENT_WORKSPACE_NODES() {
     [ -z "$NUM_NODES" ] && die "Expected number of nodes is not set/exported from invoking user-data script"
@@ -651,6 +670,24 @@ FINISH() {
     EACH_NODE 'df -h /'
 }
 
+## Main START ---------------------------------------------------------------------------
+
+TIMER_START
+
+[ -z "$API_KEY" ] && die "API_KEY is unset"
+[ -z "$ORG_ID"  ] && die "ORG_ID is unset"
+[ -z "$OWNER_ID_OR_EMAIL" ] && die "OWNER_ID_OR_EMAIL is unset"P
+
+#export PRIVATE_IP=$(hostname -i)
+export PRIVATE_IP=$(ec2metadata --local-ipv4)
+export PUBLIC_IP=$(ec2metadata --public-ipv4)
+export NODE_NAME="unset"
+
+[ -z "$PRIVATE_IP" ] && die "PRIVATE_IP is unset"P
+[ -z "$PUBLIC_IP"  ] && die "PUBLIC_IP is unset"P
+
+echo "Checking for Events owned by '$OWNER_ID_OR_EMAIL'"
+
 [ ! -z "$REGISTER_URL" ] && SECTION REGISTER_INSTALL_START
 
 # Perform all kubeadm operations from Master1:
@@ -677,7 +714,6 @@ echo "$exp_PS1" >> /root/.bashrc
 [ ! -z "$REGISTER_URL" ] && SECTION REGISTER_INSTALL_END
 
 SECTION FINISH
+TIMER_STOP "$0: "
 SECTION_LOG "$0: exit 0"
-
-
 
