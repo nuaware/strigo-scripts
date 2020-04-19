@@ -243,8 +243,21 @@ CONFIG_NODES_ACCESS() {
     done
 }
 
-# TO use once CONFIG_NODES_ACCESS() has run to setup ~/.ssh/config
 EACH_NODE() {
+    for WORKER in $(seq $NUM_WORKERS); do
+	WORKER_NODE_NAME="worker$WORKER"
+        #eval ssh $WORKER_NODE_NAME $*
+        #CMD="ssh $WORKER_NODE_NAME $*"
+        eval "$*"
+        eval CMD="\"$*\""
+        #ssh $WORKER_NODE_NAME "eval $CMD"
+        #ssh $WORKER_NODE_NAME "$CMD"
+	#eval $CMD
+    done
+}
+
+# TO use once CONFIG_NODES_ACCESS() has run to setup ~/.ssh/config
+SSH_EACH_NODE() {
     for WORKER in $(seq $NUM_WORKERS); do
 	WORKER_NODE_NAME="worker$WORKER"
         #eval ssh $WORKER_NODE_NAME $*
@@ -261,8 +274,10 @@ KUBEADM_JOIN() {
 
     echo; echo "-- performing join command on worker nodes"
 
-    EACH_NODE 'sudo $JOIN_COMMAND'
-    EACH_NODE 'echo '$WORKER_NODE_NAME' > /tmp/NODE_NAME; hostname; ls -altr /tmp/NODE_NAME; cat /tmp/NODE_NAME' | SECTION_LOG
+    SSH_EACH_NODE 'sudo $JOIN_COMMAND'
+    SSH_EACH_NODE 'echo '$WORKER_NODE_NAME' > /tmp/NODE_NAME; cat /tmp/NODE_NAME' | SECTION_LOG
+    #SSH_EACH_NODE 'echo '$WORKER_NODE_NAME' > /tmp/NODE_NAME; hostname; ls -altr /tmp/NODE_NAME; cat /tmp/NODE_NAME' | SECTION_LOG
+    #SSH_EACH_NODE 'echo '$WORKER_NODE_NAME' > /tmp/NODE_NAME; hostname; ls -altr /tmp/NODE_NAME; cat /tmp/NODE_NAME'
 
     #for WORKER in $(seq $NUM_WORKERS); do
     #    WORKER_NODE_NAME="worker$WORKER"
@@ -287,10 +302,12 @@ CNI_INSTALL() {
     kubectl get nodes
 
     for CNI_YAML in $CNI_YAMLS; do
-        kubectl create -f $CNI_YAML | SECTION_LOG
+        #kubectl create -f $CNI_YAML | SECTION_LOG
+        kubectl create -f $CNI_YAML
     done
     kubectl get nodes
     kubectl get pods -n kube-system
+    kubectl get pods -n kube-system | grep -i calico | SECTION_LOG
 
     echo "NEED TO WAIT - HOW TO HANDLE failure ... need to restart coredns, other?"
     kubectl get nodes | SECTION_LOG
@@ -318,7 +335,7 @@ SETUP_KUBECONFIG() {
 
 KUBECTL_VERSION() {
     kubectl version -o yaml
-    kubectl version --short | SECTION_LOG
+    echo "kubectl version: $(kubectl version --short)" | SECTION_LOG
 }
 
 INSTALL_KUBELAB() {
@@ -656,7 +673,7 @@ SETUP_NFS() {
 	    chown nobody:nogroup /var/nfs/general
 
             # for WIP in $WORKER_PRIVATE_IPS; do
-            EACH_NODE echo '/var/nfs/general    $WORKER_NODE_NAME\(rw,sync,no_subtree_check\) | tee -a /etc/exports'
+            EACH_NODE echo '/var/nfs/general    $WORKER_NODE_NAME\(rw,sync,no_subtree_check\)' | tee -a /etc/exports
             #for WORKER in $(seq $NUM_WORKERS); do
             #    #echo "/var/nfs/general    $WIP(rw,sync,no_subtree_check)"
             #    WORKER_NODE_NAME="worker$WORKER"
@@ -695,7 +712,7 @@ FINISH() {
     SHOWCMD kubectl get ns      | SECTION_LOG
     SHOWCMD kubectl describe nodes > /tmp/nodes.describe.txt
 
-    EACH_NODE 'df -h /'
+    SSH_EACH_NODE 'df -h /'
 }
 
 ## Main START ---------------------------------------------------------------------------
@@ -739,7 +756,7 @@ echo "$exp_PS1" >> /root/.bashrc
 
 [ ! -z "$REGISTER_URL" ] && SECTION REGISTER_INSTALL_END
 
-SECTION FINISH
+[ $NODE_IDX -eq 0 ] && SECTION FINISH
 TIMER_STOP "$0: " | SECTION_LOG
 SECTION_LOG "$0: exit 0"
 
