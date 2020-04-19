@@ -275,14 +275,12 @@ KUBEADM_JOIN() {
     #done
     kubectl get nodes | SECTION_LOG
 
-    MAX_LOOPS=10
-    LOOP=0
+    MAX_LOOPS=10; LOOP=0;
     while ! kubectl get nodes | grep $WORKER_NODE_NAME; do
-        let LOOP=LOOP+1
-        echo WAIT for node $WORKER_NODE_NAME to join ...;
-	sleep 2;
-	[ $LOOP -ge $MAX_LOOP ] && die "Failed to join $WORKER_NODE_NAME"
+	echo "Waiting for worker nodes to mount NFS share ..."
+        let LOOP=LOOP+1; sleep 2; [ $LOOP -ge $MAX_LOOP ] && die "Failed to join $WORKER_NODE_NAME"
     done
+
 }
 
 CNI_INSTALL() {
@@ -363,6 +361,12 @@ EOF
 }
 
 INSTALL_PCC_TWISTLOCK() {
+
+    MAX_LOOPS=10; LOOP=0;
+    while !  ls -altrh /var/nfs/general/MOUNTED_from_NODE_worker* ; do
+	echo "Waiting for worker nodes to mount NFS share ..."
+        let LOOP=LOOP+1; sleep 12; [ $LOOP -ge $MAX_LOOP ] && die "Failed waiting for $WORKER_NODE_NAME to mount NFS share"
+    done
 
     cat > /tmp/install_pcc.sh <<EOF
 #!/bin/bash
@@ -652,7 +656,7 @@ SETUP_NFS() {
 	    chown nobody:nogroup /var/nfs/general
 
             # for WIP in $WORKER_PRIVATE_IPS; do
-            EACH_NODE echo '/var/nfs/general    $WORKER_NODE_NAME(rw,sync,no_subtree_check) | tee -a /etc/exports'
+            EACH_NODE echo '/var/nfs/general    $WORKER_NODE_NAME\(rw,sync,no_subtree_check\) | tee -a /etc/exports'
             #for WORKER in $(seq $NUM_WORKERS); do
             #    #echo "/var/nfs/general    $WIP(rw,sync,no_subtree_check)"
             #    WORKER_NODE_NAME="worker$WORKER"
@@ -665,7 +669,7 @@ SETUP_NFS() {
 
             df -h     /var/nfs/general | SECTION_LOG
             ls -altrh /var/nfs/general | SECTION_LOG
-            date >> /var/nfs/general/MOUNTED_from_master.txt
+	    date >> /var/nfs/general/MOUNTED_from_NODE_$(hostname).txt
             ;;
         *)
             apt-get install -y nfs-common
@@ -673,6 +677,7 @@ SETUP_NFS() {
 	    mount master:/var/nfs/general /nfs/general
             df -h | grep /nfs/     | SECTION_LOG
             ls -alrh /nfs/general/ | SECTION_LOG
+	    date >> /var/nfs/general/MOUNTED_from_NODE_$(hostname).txt
 	    ;;
     esac
 }
