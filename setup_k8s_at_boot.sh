@@ -692,12 +692,12 @@ SETUP_NFS() {
             apt-get install -y nfs-common
 	    mkdir -p /nfs/general
 
-	        mount master:/var/nfs/general /nfs/general
-	    done
+	    mount master:/var/nfs/general /nfs/general
             MAX_LOOPS=10; LOOP=0;
 	    while [ ! -f /nfs/general/MOUNTED_from_NODE_master.txt ] ; do
 	        echo "Waiting for master node to initialize NFS share ..."
                 let LOOP=LOOP+1; sleep 12; [ $LOOP -ge $MAX_LOOP ] && die "Failed waiting to mount share"
+	        mount master:/var/nfs/general /nfs/general
             done
 
             df -h | grep /nfs/     | SECTION_LOG
