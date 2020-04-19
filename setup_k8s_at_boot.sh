@@ -299,7 +299,7 @@ KUBEADM_JOIN() {
 
     MAX_LOOPS=10; LOOP=0;
     while ! kubectl get nodes | grep $WORKER_NODE_NAME; do
-	echo "Waiting for worker nodes to mount NFS share ..."
+	echo "Waiting for worker nodes to join ..."
         let LOOP=LOOP+1; sleep 2; [ $LOOP -ge $MAX_LOOP ] && die "Failed to join $WORKER_NODE_NAME"
     done
 }
@@ -494,9 +494,9 @@ SETUP_NFS() {
             systemctl restart nfs-kernel-server
             ln -s /var/nfs/general /nfs/
 
+	    date >> /nfs/general/MOUNTED_from_NODE_$(hostname).txt
             df -h     /var/nfs/general | SECTION_LOG
             ls -altrh /var/nfs/general | SECTION_LOG
-	    date >> /nfs/general/MOUNTED_from_NODE_$(hostname).txt
             ;;
         *)
 	    mkdir -p /nfs/general
@@ -509,9 +509,9 @@ SETUP_NFS() {
 	        mount master:/var/nfs/general /nfs/general
             done
 
+	    date >> /nfs/general/MOUNTED_from_NODE_$(hostname).txt
             df -h | grep /nfs/     | SECTION_LOG
             ls -alrh /nfs/general/ | SECTION_LOG
-	    date >> /nfs/general/MOUNTED_from_NODE_$(hostname).txt
 	    ;;
     esac
 }
@@ -529,7 +529,28 @@ FINISH() {
     SHOWCMD kubectl get ns      | SECTION_LOG
     SHOWCMD kubectl describe nodes > /tmp/nodes.describe.txt
 
-    SSH_EACH_NODE 'df -h /'
+    SSH_EACH_NODE 'df -h /' | SECTION_LOG
+
+    kubectl get pods -A --no-headers | grep -v Running
+    kubectl get pods -A --no-headers | grep Evicted &&
+	    die "Error - some evicted Pods"
+
+    #kubectl get pods -A -o json | jq '.items[] | select(.status.reason!=null)' 
+    #kubectl get pods -A -o json | jq '.items[] | select(.status.reason!=null)'  | grep Evicted &&
+	    #die "Error - some evicted Pods"
+    #BAD_PODS=$(kubectl get pods -A -o json | jq '.items[] | select(.status.reason!=null)' | wc -l)
+
+    BAD_PODS=$(kubectl get pods -A --no-headers | grep -v Running | wc -l)
+    MAX_LOOPS=10; LOOP=0;
+    while [ $BAD_PODS -ne 0 ]; do
+	echo "Waiting for remaining Pods to be running"
+        let LOOP=LOOP+1; sleep 12; [ $LOOP -ge $MAX_LOOP ] && die "Failed waiting for remaining Pods"
+
+        #kubectl get pods -A -o json | jq '.items[] | select(.status.reason!=null)' 
+        #BAD_PODS=$(kubectl get pods -A -o json | jq '.items[] | select(.status.reason!=null)' | wc -l)
+        kubectl get pods -A --no-headers | grep -v Running
+        BAD_PODS=$(kubectl get pods -A --no-headers | grep -v Running | wc -l)
+   done
 }
 
 ## Main START ---------------------------------------------------------------------------
