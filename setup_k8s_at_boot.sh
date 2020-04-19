@@ -249,8 +249,9 @@ EACH_NODE() {
 	WORKER_NODE_NAME="worker$WORKER"
         #eval ssh $WORKER_NODE_NAME $*
         #CMD="ssh $WORKER_NODE_NAME $*"
-        CMD="$*"
-        ssh $WORKER_NODE_NAME "eval $CMD"
+        eval CMD="$*"
+        #ssh $WORKER_NODE_NAME "eval $CMD"
+        ssh $WORKER_NODE_NAME "$CMD"
 	#eval $CMD
     done
 }
@@ -261,7 +262,7 @@ KUBEADM_JOIN() {
     echo; echo "-- performing join command on worker nodes"
 
     EACH_NODE 'sudo $JOIN_COMMAND'
-    EACH_NODE 'echo $WORKER_NODE_NAME > /tmp/NODE_NAME; hostname; ls -altr /tmp/NODE_NAME; cat /tmp/NODE_NAME' | SECTION_LOG
+    EACH_NODE 'echo '$WORKER_NODE_NAME' > /tmp/NODE_NAME; hostname; ls -altr /tmp/NODE_NAME; cat /tmp/NODE_NAME' | SECTION_LOG
 
     #for WORKER in $(seq $NUM_WORKERS); do
     #    WORKER_NODE_NAME="worker$WORKER"
@@ -722,12 +723,12 @@ else
     [ $NUM_MASTERS -gt 1 ] && die "Not implemented NUM_MASTERS > 1"
 
     while [ ! -f /tmp/NODE_NAME ]; do sleep 5; done
-    NODE_NAME=$(cat /tmp/NODE_NAME)
-    SECTION SETUP_NFS worker on $NODE_NAME
+    #NODE_NAME=$(cat /tmp/NODE_NAME)
+    SECTION SETUP_NFS worker on $(hostname)
 fi
 
 #echo "export PS1='\u@\h:\w\$'"
-exp_PS1="export PS1='\u@'${NODE_NAME}':\w\$ '"
+exp_PS1="export PS1='\u@'$(hostname)':\w\$ '"
 echo "$exp_PS1" >> /home/ubuntu/.bashrc
 echo "$exp_PS1" >> /root/.bashrc
 
