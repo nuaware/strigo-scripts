@@ -155,6 +155,15 @@ CREATE_DEFENDER() {
     kubectl create -f defender.yaml | SECTION_LOG
 }
 
+CLEANUP_TWISTLOCK() {
+    cd /root/
+
+    CMD="rm -rf twistlock/osx twistlock/prisma-cloud-jenkins-plugin.hpi twistlock/twistlock_console.tar.gz twistlock/windows"
+
+    { echo; echo "---- Cleaning up unused twistlock files ---------"
+      df -h /; echo "-- $CMD"; $CMD; df -h /; } | SECTION_LOG
+}
+
 [ $(id -un) != 'root' ] && die "$0: run as root"
 
 mkdir -p /root/twistlock
@@ -165,6 +174,7 @@ if [ "$1" = "--init-console" ];then
 else
     GET_ADMIN_NODE_PORT
     CREATE_DEFENDER
+    CLEANUP_TWISTLOCK
 fi
 
 
