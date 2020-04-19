@@ -2,24 +2,35 @@
 
 SCRIPT_DIR=$(dirname $0)
 
-UPGRADE_KUBE_LATEST=0
-UPGRADE_KUBE_LATEST=1
+export UPGRADE_KUBE_LATEST=0
+export UPGRADE_KUBE_LATEST=1
+
+export TWISTLOCK_PCC_RELEASE=20_04_163
 
 # To force a specific version, e.g. "stable-1" or "v1.18.2" set to version here and set UPGRADE_KUBE_LATEST=1
-KUBERNETES_VERSION=""
+export K8S_RELEASE="v1.18.2"
 
-export PRISMA_PCC_TAR=/tmp/prisma_cloud_compute_edition_20_04_163.tar.gz
-export PRISMA_PCC_ACCESS
+export K8S_INSTALLER="kubeadm"
+
+# Terraform
+export INSTALL_TERRAFORM=1
+
+# Helm
+export INSTALL_HELM=1
+
+KUBERNETES_VERSION="--kubernetes-version $K8S_RELEASE"
+[ $UPGRADE_KUBE_LATEST -eq 1 ] && KUBERNETES_VERSION="--kubernetes-version $(kubeadm version -o short)"
+
 INSTALL_PCC_SH_URL=https://raw.githubusercontent.com/mjbright/strigo-scripts/master/install_pcc.sh
+#https://cdn.twistlock.com/releases/6e6c2d6a/prisma_cloud_compute_edition_20_04_163.tar.gz
+export PRISMA_PCC_ACCESS
+export PRISMA_PCC_TAR="/tmp/prisma_cloud_compute_edition_${TWISTLOCK_PCC_RELEASE}.tar.gz"
+export PRISMA_PCC_URL="https://cdn.twistlock.com/releases/6e6c2d6a/prisma_cloud_compute_edition_${TWISTLOCK_PCC_RELEASE}.tar.gz"
 
 CNI_YAMLS="https://docs.projectcalico.org/manifests/calico.yaml"
 POD_CIDR="192.168.0.0/16"
 
 SECTION_LOG=/tmp/SECTION.log
-
-#K8S_RELEASE="1.18.1"
-K8S_RELEASE="1.18.0"
-K8S_INSTALLER="kubeadm"
 
 NUM_MASTERS=1
 
@@ -36,12 +47,6 @@ BIN=/usr/local/bin
 
 [ $INSTALL_PCC_TWISTLOCK -eq 0 ] &&
     [ ! -z "$PRISMA_PCC_ACCESS" ] && echo "export PRISMA_PCC_ACCESS=$PRISMA_PCC_ACCESS" >> /root/.profile
-
-# Terraform
-INSTALL_TERRAFORM=1
-
-# Helm
-INSTALL_HELM=1
 
 cat >> /root/.profile <<EOF
 export HOME=/root
@@ -178,17 +183,13 @@ RANCHER_RKE_INIT() { # USE $POD_CIDR
     wget -qO $BIN/rke $URL
 }
 
-KUBEADM_INIT() { # USE $POD_CIDR
-
+KUBEADM_INIT() {
     #kubeadm init --kubernetes-version=$K8S_RELEASE --pod-network-cidr=$POD_CIDR --apiserver-cert-extra-sans=__MASTER1_IP__ | tee kubeadm-init.out
     export NODE_NAME="master"
     sudo hostnamectl set-hostname $NODE_NAME
     echo "local hostname=$(hostname)" | SECTION_LOG
 
-    [ $UPGRADE_KUBE_LATEST -eq 1 ] && [ -z "$KUBERNETES_VERSION=" ] &&
-        KUBERNETES_VERSION="--kubernetes-version $(kubeadm version -o short)"
-
-    kubeadm init #KUBERNETES_VERSION --node-name $NODE_NAME \
+    kubeadm init $KUBERNETES_VERSION --node-name $NODE_NAME \
             --pod-network-cidr=$POD_CIDR --kubernetes-version=$K8S_RELEASE \
             --apiserver-cert-extra-sans=$PUBLIC_IP | \
         tee /tmp/kubeadm-init.out
@@ -435,13 +436,7 @@ INSTALL_TERRAFORM() {
 }
 
 DOWNLOAD_PCC_TWISTLOCK() {
-    #https://cdn.twistlock.com/releases/6e6c2d6a/prisma_cloud_compute_edition_20_04_163.tar.gz
-    TWISTLOCK_PCC_RELEASE=20_04_163
-
-    TAR="/tmp/prisma_cloud_compute_edition_${TWISTLOCK_PCC_RELEASE}.tar.gz"
-    URL="https://cdn.twistlock.com/releases/6e6c2d6a/prisma_cloud_compute_edition_${TWISTLOCK_PCC_RELEASE}.tar.gz"
-
-    wget -O $PRISMA_PCC_TAR $URL
+    wget -qO $PRISMA_PCC_TAR $PRISMA_PCC_URL
     ls -altrh $PRISMA_PCC_TAR | SECTION_LOG
 }
 
@@ -562,18 +557,16 @@ FINISH() {
 
 TIMER_START
 
-[ -z "$API_KEY" ] && die "API_KEY is unset"
-[ -z "$ORG_ID"  ] && die "ORG_ID is unset"
+[ -z "$API_KEY"           ] && die "API_KEY is unset"
+[ -z "$ORG_ID"            ] && die "ORG_ID is unset"
 [ -z "$OWNER_ID_OR_EMAIL" ] && die "OWNER_ID_OR_EMAIL is unset"P
 
-[ -z "$PRIVATE_IP" ] && die "PRIVATE_IP is unset"P
-[ -z "$PUBLIC_IP"  ] && die "PUBLIC_IP is unset"P
+[ -z "$PRIVATE_IP"        ] && die "PRIVATE_IP is unset"P
+[ -z "$PUBLIC_IP"         ] && die "PUBLIC_IP is unset"P
 
 echo "Checking for Events owned by '$OWNER_ID_OR_EMAIL'"
 
-[ ! -z "$REGISTER_URL" ] && SECTION REGISTER_INSTALL_START
-
-## -- MAIN ---------------------------------------------------------------------
+[ ! -z "$REGISTER_URL"    ] && SECTION REGISTER_INSTALL_START
 
 APT_INSTALL_PACKAGES="jq zip"
 

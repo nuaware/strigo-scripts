@@ -13,10 +13,22 @@ export ORG_ID="__ORG_ID__"
 export API_KEY="__API_KEY__"
 export OWNER_ID_OR_EMAIL="__OWNER_ID_OR_EMAIL__"
 export PRISMA_PCC_ACCESS="__PRISMA_ACCESS_KEY__"
+export REGISTER_URL="__REGISTER_URL__"
 
 export INSTALL_KUBELAB=1
 export DOWNLOAD_PCC_TWISTLOCK=1
 export INSTALL_PCC_TWISTLOCK=1
+
+# To force a specific version, e.g. "stable-1" or "v1.18.2" set to version here and set UPGRADE_KUBE_LATEST=1
+export K8S_RELEASE="v1.18.2"
+#export UPGRADE_KUBE_LATEST=0
+export UPGRADE_KUBE_LATEST=1
+export K8S_INSTALLER="kubeadm"
+
+export TWISTLOCK_PCC_RELEASE=20_04_163
+
+export INSTALL_TERRAFORM=1
+export INSTALL_HELM=1
 
 export NUM_NODES=2 # Must match !!
 
@@ -30,8 +42,6 @@ wget -qO $DIR/get_workspaces_info.py \
 
 chmod +x $DIR/$BOOT_SETUP_SH
 chmod +x $DIR/get_workspaces_info.py
-
-export REGISTER_URL="__REGISTER_URL__"
 
 bash -x $DIR/$BOOT_SETUP_SH
 
