@@ -229,7 +229,7 @@ KUBEADM_JOIN() {
 
     echo; echo "-- performing join command on worker nodes"
 
-    EACH_NODE 'sudo $JOIN_COMMAND --node-name $WORKER_NODE_NAME'
+    EACH_NODE 'sudo $JOIN_COMMAND --node-name $WORKER_NODE_NAME; echo $WORKER_NODE_NAME > /tmp/NODE_NAME'
 
     #for WORKER in $(seq $NUM_WORKERS); do
     #    WORKER_NODE_NAME="worker$WORKER"
@@ -622,12 +622,14 @@ SETUP_NFS() {
 
             df -h     /var/nfs/general | SECTION_LOG
             ls -altrh /var/nfs/general | SECTION_LOG
+            date >> /var/nfs/general/MOUNTED_from_master.txt
             ;;
         *)
             apt-get install -y nfs-common
 	    mkdir -p /nfs/general
 	    mount master:/var/nfs/general /nfs/general
-            df -h | grep /nfs/ | SECTION_LOG
+            df -h | grep /nfs/     | SECTION_LOG
+            ls -alrh /nfs/general/ | SECTION_LOG
 	    ;;
     esac
 }
@@ -663,12 +665,18 @@ if [ $NODE_IDX -eq 0 ] ; then
 else
     while [ ! -f /tmp/NODE_NAME ]; do sleep 5; done
     NODE_NAME=$(cat /tmp/NODE_NAME)
-    SECTION SETUP_NFS worker
+    SECTION SETUP_NFS worker on $NODE_NAME
 fi
+
+#echo "export PS1='\u@\h:\w\$'"
+exp_PS1="export PS1='\u@'${NODE_NAME}':\w\$ '"
+echo "$exp_PS1" >> /home/ubuntu/.bashrc
+echo "$exp_PS1" >> /root/.bashrc
 
 [ ! -z "$REGISTER_URL" ] && SECTION REGISTER_INSTALL_END
 
 SECTION FINISH
+SECTION_LOG "$0: exit 0"
 
 
 
