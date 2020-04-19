@@ -256,12 +256,12 @@ EACH_NODE() {
 }
 
 KUBEADM_JOIN() {
-    JOIN_COMMAND=$(kubeadm token create --print-join-command --node-name $WORKER_NODE_NAME)
+    JOIN_COMMAND=$(kubeadm token create --print-join-command)" --node-name $WORKER_NODE_NAME"
 
     echo; echo "-- performing join command on worker nodes"
 
     EACH_NODE 'sudo $JOIN_COMMAND'
-    EACH_NODE 'echo $WORKER_NODE_NAME > /tmp/NODE_NAME; ls -altr /tmp/NODE_NAME; cat /tmp/NODE_NAME' | SECTION_LOG
+    EACH_NODE 'echo $WORKER_NODE_NAME > /tmp/NODE_NAME; hostname; ls -altr /tmp/NODE_NAME; cat /tmp/NODE_NAME' | SECTION_LOG
 
     #for WORKER in $(seq $NUM_WORKERS); do
     #    WORKER_NODE_NAME="worker$WORKER"
@@ -273,6 +273,15 @@ KUBEADM_JOIN() {
     #    echo $WORKER_NODE_NAME | ssh $WORKER_NODE_NAME tee /tmp/NODE_NAME
     #done
     kubectl get nodes | SECTION_LOG
+
+    MAX_LOOPS=10
+    LOOP=0
+    while ! kubectl get nodes | grep $WORKER_NODE_NAME; do
+        let LOOP=LOOP+1
+        echo WAIT for node $WORKER_NODE_NAME to join ...;
+	sleep 2;
+	[ $LOOP -ge $MAX_LOOP ] && die "Failed to join $WORKER_NODE_NAME"
+    done
 }
 
 CNI_INSTALL() {
