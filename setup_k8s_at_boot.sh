@@ -3,6 +3,8 @@
 CNI_YAMLS="https://docs.projectcalico.org/manifests/calico.yaml"
 POD_CIDR="192.168.0.0/16"
 
+SECTION_LOG=/tmp/SECTION.log
+
 #K8S_RELEASE="1.18.1"
 K8S_RELEASE="1.18.0"
 K8S_INSTALLER="kubeadm"
@@ -50,6 +52,21 @@ ERROR() {
     echo "******************************************************"
     echo "** ERROR: $*"
     echo "******************************************************"
+}
+
+SECTION_LOG() {
+    if [ -z "$1" ]; then
+        tee -a ${SECTION_LOG}
+    else
+        echo "$*" >> ${SECTION_LOG}
+    fi
+}
+
+SECTION() {
+    SECTION="$*"
+
+    echo; echo "== [$(date)] ========== $SECTION =================================" | SECTION_LOG
+    $*
 }
 
 die() {
@@ -113,7 +130,7 @@ START_DOCKER_plus() {
     usermod -aG docker ubuntu
     { echo "ubuntu: docker ps"; sudo -u ubuntu docker ps; } | SECTION_LOG
     echo "ubuntu: docker version"; sudo -i docker version
-    #newgrp docker
+    # newgrp docker # In shell allow immediate joining of group / use of docker
 }
 
 GET_LAB_RESOURCES() {
@@ -214,7 +231,7 @@ CNI_INSTALL() {
     kubectl get nodes
 
     for CNI_YAML in $CNI_YAMLS; do
-        kubectl create -f $CNI_YAML
+        kubectl create -f $CNI_YAML | SETUP_LOG
     done
     kubectl get nodes
     kubectl get pods -n kube-system
@@ -270,7 +287,7 @@ chown ubuntu:ubuntu /home/ubuntu/.kube/config.kubelab
 kubectl create ns kubelab 
 kubectl -n kubelab create configmap kube-configmap --from-file=/home/ubuntu/.kube/config.kubelab
 
-kubectl create -f /root/github.com/kubelab/kubelab.yaml
+kubectl create -f /root/github.com/kubelab/kubelab.yaml | SETUP_LOG
 
 kubectl -n kubelab get cm
 kubectl -n kubelab get pods -o wide | grep " Running " || sleep 10
@@ -294,8 +311,16 @@ TAR=/tmp/prisma_cloud_compute_edition_20_04_163.tar.gz
 PUBLIC_HOST=$(ec2metadata --public-host)
 ADMIN_USER="admin"
 
+SECTION_LOG() {
+    if [ -z "$1" ]; then
+        tee -a ${SECTION_LOG}
+    else
+        echo "$*" >> ${SECTION_LOG}
+    fi
+}
+
 die() {
-    echo "$0: die - $*" >&2 | tee -a /tmp/SECTION.log
+    echo "$0: die - $*" >&2 | SECTION_LOG
     exit 1
 }
 
@@ -325,7 +350,7 @@ set -x
     [ ! -f twistlock_console.yaml ] && die "Failed to export console manifest"
 
     ls          -altr twistlock_console.yaml
-    kubectl create -f twistlock_console.yaml
+    kubectl create -f twistlock_console.yaml | SETUP_LOG
 }
 
 CREATE_PV() {
@@ -366,7 +391,7 @@ metadata:
         volume.beta.kubernetes.io/mount-options: "nolock,noatime,bg"
 '
 
-    kubectl create -f /tmp/twistlock-pv.yaml
+    kubectl create -f /tmp/twistlock-pv.yaml | SETUP_LOG
 }
 
 GET_ADMIN_NODE_PORT() {
@@ -380,7 +405,7 @@ GET_ADMIN_NODE_PORT() {
     kubectl get service -o wide -n twistlock
     kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*]
     #kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*]
-    kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*] | tee -a /tmp/SECTION.log
+    kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*] | SECTION_LOG
 
     NODE_PORTS=$(kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*].nodePort --no-headers)
     echo NODE_PORTS=$NODE_PORTS
@@ -393,7 +418,7 @@ GET_ADMIN_NODE_PORT() {
     #echo commication URL=https://${MASTER_PUBLIC_IP}:${PORT1}
 
     #echo Management URL=https://${MASTER_PUBLIC_IP}:${PORT2}
-    echo Management URL=https://${PUBLIC_HOST}:${PORT2}
+    echo PrismaCloud Console/Management URL=https://${PUBLIC_HOST}:${PORT2} | SECTION_LOG
     ADMIN_NODE_PORT=$PORT2
 
     #$ kubectl get service -o wide -n twistlock
@@ -497,21 +522,6 @@ REGISTER_INSTALL_START() {
 
 REGISTER_INSTALL_END() {
     wget -qO - "$REGISTER_URL/${EVENT}_${WORKSPACE}_${NODE_NAME}_${PUBLIC_IP}_provisioning_END"
-}
-
-SECTION_LOG() {
-    if [ -z "$1" ]; then
-        tee -a /tmp/SECTION.log
-    else
-        echo "$*" >> /tmp/SECTION.log
-    fi
-}
-
-SECTION() {
-    SECTION="$*"
-
-    echo; echo "== [$(date)] ========== $SECTION =================================" | SECTION_LOG
-    $*
 }
 
 ## -- MAIN ---------------------------------------------------------------------
