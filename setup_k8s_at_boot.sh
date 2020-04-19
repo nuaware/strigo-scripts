@@ -207,7 +207,20 @@ CONFIG_NODES_ACCESS() {
     echo; echo "-- setting up /etc/hosts"
     cat /tmp/hosts.add >> /etc/hosts
     for WORKER in $(seq $NUM_WORKERS); do
+	WORKER_NODE_NAME="worker$WORKER"
         cat /tmp/hosts.add | ssh $WORKER_NODE_NAME "sudo tee -a /etc/hosts"
+    done
+}
+
+# TO use once CONFIG_NODES_ACCESS() has run to setup ~/.ssh/config
+EACH_NODE() {
+    for WORKER in $(seq $NUM_WORKERS); do
+	WORKER_NODE_NAME="worker$WORKER"
+        #eval ssh $WORKER_NODE_NAME $*
+        eval CMD="ssh $WORKER_NODE_NAME $*"
+
+	# Echo to stderr in case we use output of this function  ...
+	$CMD
     done
 }
 
@@ -215,15 +228,18 @@ KUBEADM_JOIN() {
     JOIN_COMMAND=$(kubeadm token create --print-join-command)
 
     echo; echo "-- performing join command on worker nodes"
-    for WORKER in $(seq $NUM_WORKERS); do
-        WORKER_NODE_NAME="worker$WORKER"
 
-        #CMD="$_SSH_IP sudo $JOIN_COMMAND --node-name $WORKER_NODE_NAME"
-        CMD="ssh $WORKER_NODE_NAME sudo $JOIN_COMMAND --node-name $WORKER_NODE_NAME"
-        echo "-- $CMD" | SECTION_LOG
-        $CMD
-        echo $WORKER_NODE_NAME | ssh $WORKER_NODE_NAME tee /tmp/NODE_NAME
-    done
+    EACH_NODE 'sudo $JOIN_COMMAND --node-name $WORKER_NODE_NAME'
+
+    #for WORKER in $(seq $NUM_WORKERS); do
+    #    WORKER_NODE_NAME="worker$WORKER"
+#
+    #    #CMD="$_SSH_IP sudo $JOIN_COMMAND --node-name $WORKER_NODE_NAME"
+    #    CMD="ssh $WORKER_NODE_NAME sudo $JOIN_COMMAND --node-name $WORKER_NODE_NAME"
+    #    echo "-- $CMD" | SECTION_LOG
+    #    $CMD
+    #    echo $WORKER_NODE_NAME | ssh $WORKER_NODE_NAME tee /tmp/NODE_NAME
+    #done
     kubectl get nodes | SECTION_LOG
 }
 
@@ -231,7 +247,7 @@ CNI_INSTALL() {
     kubectl get nodes
 
     for CNI_YAML in $CNI_YAMLS; do
-        kubectl create -f $CNI_YAML | SETUP_LOG
+        kubectl create -f $CNI_YAML | SECTION_LOG
     done
     kubectl get nodes
     kubectl get pods -n kube-system
@@ -287,7 +303,7 @@ chown ubuntu:ubuntu /home/ubuntu/.kube/config.kubelab
 kubectl create ns kubelab 
 kubectl -n kubelab create configmap kube-configmap --from-file=/home/ubuntu/.kube/config.kubelab
 
-kubectl create -f /root/github.com/kubelab/kubelab.yaml | SETUP_LOG
+kubectl create -f /root/github.com/kubelab/kubelab.yaml | SECTION_LOG
 
 kubectl -n kubelab get cm
 kubectl -n kubelab get pods -o wide | grep " Running " || sleep 10
@@ -350,7 +366,7 @@ set -x
     [ ! -f twistlock_console.yaml ] && die "Failed to export console manifest"
 
     ls          -altr twistlock_console.yaml
-    kubectl create -f twistlock_console.yaml | SETUP_LOG
+    kubectl create -f twistlock_console.yaml | SECTION_LOG
 }
 
 CREATE_PV() {
@@ -391,7 +407,7 @@ metadata:
         volume.beta.kubernetes.io/mount-options: "nolock,noatime,bg"
 '
 
-    kubectl create -f /tmp/twistlock-pv.yaml | SETUP_LOG
+    kubectl create -f /tmp/twistlock-pv.yaml | SECTION_LOG
 }
 
 GET_ADMIN_NODE_PORT() {
