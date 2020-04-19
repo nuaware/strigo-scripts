@@ -343,7 +343,8 @@ SETUP_KUBECONFIG() {
 
 KUBECTL_VERSION() {
     kubectl version -o yaml
-    { echo "kubectl version: $(kubectl version --short)" | tr '\n' ',' | sed 's/,/ /g'; echo; } | SECTION_LOG
+    #{ echo "kubectl version: $(kubectl version --short)" | tr '\n' ',' | sed 's/,/ /g'; echo; } | SECTION_LOG
+    { echo "kubectl version: $(kubectl version --short)" | tr '\n' ' '; echo; } | SECTION_LOG
 }
 
 INSTALL_KUBELAB() {
@@ -381,6 +382,7 @@ EOF
 
     kubectl -n kubelab get pods | SECTION_LOG
     WAIT_POD_RUNNING -n kubelab
+    kubectl -n kubelab cp /root/.jupyter.profile kubelab:.jupyter.profile
 }
 
 INSTALL_PCC_TWISTLOCK() {
