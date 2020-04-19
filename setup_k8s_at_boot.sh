@@ -346,6 +346,14 @@ UNPACK_TAR() {
     echo; echo "---- Unpacking tar [$TAR] -----"
 
     tar xvzf $TAR  -C ~/twistlock
+
+    echo
+    echo "---- Removing tar file to win back disk space:"
+    df -h /
+    echo "rm  -f $TAR"
+    rm  -f $TAR
+    df -h /
+    echo "----"
 }
 
 CREATE_CONSOLE() {
