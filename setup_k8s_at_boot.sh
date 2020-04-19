@@ -227,7 +227,7 @@ CONFIG_NODES_ACCESS() {
 	    echo "    User     ubuntu"
 	    echo "    Hostname $WORKER_PRIVATE_IP"
 	    echo "    IdentityFile ~/.ssh/id_rsa"
-        } | tee -a /home/ubuntu/.ssh/config | sed 's?~?/root?' | tee -a ~/.ssh/config 
+        } | tee -a /home/ubuntu/.ssh/config | sed 's?~?/root?' | tee -a ~/.ssh/config
 
         echo "WORKER[$WORKER]=NODE[$NODE_NUM] $WORKER_NODE_NAME WORKER_PRIVATE_IP=$WORKER_PRIVATE_IP WORKER_PUBLIC_IP=$WORKER_PUBLIC_IP"
 
@@ -238,7 +238,7 @@ CONFIG_NODES_ACCESS() {
         $_SSH_ROOT_IP uptime
 
 	{
-	    echo "From ubuntu to ubuntu@$WORKER_NODE_NAME: hostname=$($_SSH_IP      hostname)"; 
+	    echo "From ubuntu to ubuntu@$WORKER_NODE_NAME: hostname=$($_SSH_IP      hostname)";
 	    echo "From   root to ubuntu@$WORKER_NODE_NAME: hostname=$($_SSH_ROOT_IP hostname)";
 	} | SECTION_LOG
         $_SSH_ROOT_IP sudo hostnamectl set-hostname $WORKER_NODE_NAME
@@ -363,7 +363,7 @@ sed -e '/user: kubernetes-admin/a \ \ \ \ namespace: default' < /home/ubuntu/.ku
 chown ubuntu:ubuntu /home/ubuntu/.kube/config.kubelab
 
 # Mount new kubeconfig as a ConfigMap/file:
-kubectl create ns kubelab 
+kubectl create ns kubelab
 kubectl -n kubelab create configmap kube-configmap --from-file=/home/ubuntu/.kube/config.kubelab
 
 kubectl create -f /root/github.com/kubelab/kubelab.yaml
@@ -380,6 +380,7 @@ EOF
     /tmp/kubelab.sh
 
     kubectl -n kubelab get pods | SECTION_LOG
+    WAIT_POD_RUNNING -n kubelab
 }
 
 INSTALL_PCC_TWISTLOCK() {
@@ -531,7 +532,7 @@ FINISH() {
     kubectl get pods -A --no-headers | grep Evicted &&
 	    die "Error - some evicted Pods"
 
-    #kubectl get pods -A -o json | jq '.items[] | select(.status.reason!=null)' 
+    #kubectl get pods -A -o json | jq '.items[] | select(.status.reason!=null)'
     #kubectl get pods -A -o json | jq '.items[] | select(.status.reason!=null)'  | grep Evicted &&
 	    #die "Error - some evicted Pods"
     #BAD_PODS=$(kubectl get pods -A -o json | jq '.items[] | select(.status.reason!=null)' | wc -l)
@@ -542,7 +543,7 @@ FINISH() {
 	echo "Waiting for remaining Pods to be running" | SECTION_LOG
         let LOOP=LOOP+1; sleep 12; [ $LOOP -ge $MAX_LOOP ] && die "Failed waiting for remaining Pods"
 
-        #kubectl get pods -A -o json | jq '.items[] | select(.status.reason!=null)' 
+        #kubectl get pods -A -o json | jq '.items[] | select(.status.reason!=null)'
         #BAD_PODS=$(kubectl get pods -A -o json | jq '.items[] | select(.status.reason!=null)' | wc -l)
         kubectl get pods -A --no-headers | grep -v Running | SECTION_LOG
         BAD_PODS=$(kubectl get pods -A --no-headers | grep -v Running | wc -l)
@@ -551,6 +552,31 @@ FINISH() {
     { echo; echo "----"; kubectl get pods -n twistlock; kubectl get pods -n kubelab
       echo; echo "----"; echo "Connect to Console at [cat /tmp/PCC.console.url]:"; cat /tmp/PCC.console.url
     } | SECTION_LOG
+}
+
+WAIT_POD_RUNNING() {
+    POD_SPEC=$*
+    # eg. -A
+    # -n <namespace>
+    # -n <namespace> podname
+    # -n <namespace> -l LABEL=VALUE
+
+    BAD_PODS=$(kubectl get pods $POD_SPEC --no-headers | grep -v Running | wc -l)
+    kubectl get pods $POD_SPEC
+
+    MAX_LOOPS=10; LOOP=0;
+    while [ $BAD_PODS -ne 0 ]; do
+	echo "Waiting for Pods [$POD_SPEC] to be Running" | SECTION_LOG
+
+	let _MOD=${LOOP}%3; [ $_MOD -eq 0 ] &&
+            kubectl describe pods $POD_SPEC 2>/dev/null |& grep -A 20 ^Events:
+        let LOOP=LOOP+1; sleep 12; [ $LOOP -ge $MAX_LOOP ] && die "Failed waiting for Pods [$POD_SPEC]"
+
+        #kubectl get pods -A -o json | jq '.items[] | select(.status.reason!=null)'
+        #BAD_PODS=$(kubectl get pods -A -o json | jq '.items[] | select(.status.reason!=null)' | wc -l)
+        kubectl get pods $POD_SPEC --no-headers | grep -v Running | SECTION_LOG
+        BAD_PODS=$(kubectl get pods $POD_SPEC --no-headers | grep -v Running | wc -l)
+    done
 }
 
 ## Main START ---------------------------------------------------------------------------
