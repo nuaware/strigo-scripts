@@ -178,10 +178,14 @@ KUBEADM_INIT() { # USE $POD_CIDR
 
     #kubeadm init --kubernetes-version=$K8S_RELEASE --pod-network-cidr=$POD_CIDR --apiserver-cert-extra-sans=__MASTER1_IP__ | tee kubeadm-init.out
     export NODE_NAME="master"
+    sudo hostnamectl set-hostname $NODE_NAME
+    echo "local hostname=$(hostname)" | SECTION_LOG
+
     kubeadm init --node-name $NODE_NAME --pod-network-cidr=$POD_CIDR --kubernetes-version=$K8S_RELEASE \
                  --apiserver-cert-extra-sans=$PUBLIC_IP | \
         tee /tmp/kubeadm-init.out
     #kubeadm init | tee /tmp/kubeadm-init.out
+    kubectl get nodes | SECTION_LOG
 }
 
 # Configure nodes access from master:
@@ -189,6 +193,7 @@ KUBEADM_INIT() { # USE $POD_CIDR
 # - Create .ssh/config entries
 #
 CONFIG_NODES_ACCESS() {
+    echo "local hostname=$(hostname)" | SECTION_LOG
     echo "$PRIVATE_IP master" | tee /tmp/hosts.add
 
     WORKER_PRIVATE_IPS=""
@@ -227,6 +232,7 @@ CONFIG_NODES_ACCESS() {
 	    echo "From ubuntu to ubuntu@$WORKER_NODE_NAME: hostname=$($_SSH_IP      hostname)"; 
 	    echo "From   root to ubuntu@$WORKER_NODE_NAME: hostname=$($_SSH_ROOT_IP hostname)";
 	} | SECTION_LOG
+        $_SSH_ROOT_IP sudo hostnamectl set-hostname $WORKER_NODE_NAME
     done
 
     echo; echo "-- setting up /etc/hosts"
