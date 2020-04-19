@@ -601,12 +601,13 @@ SETUP_NFS() {
 	    chown nobody:nogroup /var/nfs/general
 
             # for WIP in $WORKER_PRIVATE_IPS; do
-            for WORKER in $(seq $NUM_WORKERS); do
-                #echo "/var/nfs/general    $WIP(rw,sync,no_subtree_check)"
-                WORKER_NODE_NAME="worker$WORKER"
-                echo "/var/nfs/general    $WORKER_NODE_NAME(rw,sync,no_subtree_check)"
-                #/home       $PIP(rw,sync,no_root_squash,no_subtree_check)
-            done | tee -a /etc/exports
+            EACH_NODE echo '/var/nfs/general    $WORKER_NODE_NAME(rw,sync,no_subtree_check)' | tee -a /etc/exports
+            #for WORKER in $(seq $NUM_WORKERS); do
+            #    #echo "/var/nfs/general    $WIP(rw,sync,no_subtree_check)"
+            #    WORKER_NODE_NAME="worker$WORKER"
+            #    echo "/var/nfs/general    $WORKER_NODE_NAME(rw,sync,no_subtree_check)"
+            #    #/home       $PIP(rw,sync,no_root_squash,no_subtree_check)
+            #done | tee -a /etc/exports
 
             systemctl restart nfs-kernel-server
             ln -s /var/nfs/general /nfs/
@@ -621,6 +622,22 @@ SETUP_NFS() {
             df -h | grep /nfs/ | SECTION_LOG
 	    ;;
     esac
+}
+
+SHOWCMD() {
+    CMD="$*"
+    echo "-- $CMD"
+    $CMD
+    RET=$?
+    [ $RET -ne 0 ] && echo "--> returned $RET"
+}
+
+FINISH() {
+    SHOWCMD kubectl get pods -A | SECTION_LOG
+    SHOWCMD kubectl get ns      | SECTION_LOG
+    SHOWCMD kubectl describe nodes > /tmp/nodes.describe.txt
+
+    EACH_NODE 'df -h /'
 }
 
 [ ! -z "$REGISTER_URL" ] && SECTION REGISTER_INSTALL_START
@@ -643,7 +660,7 @@ fi
 
 [ ! -z "$REGISTER_URL" ] && SECTION REGISTER_INSTALL_END
 
-SECTION exit
+SECTION FINISH
 
 
 
