@@ -13,6 +13,11 @@ K8S_INSTALLER="kubeadm"
 
 NUM_MASTERS=1
 
+#export PRIVATE_IP=$(hostname -i)
+export PRIVATE_IP=$(ec2metadata --local-ipv4)
+export PUBLIC_IP=$(ec2metadata --public-ipv4)
+export NODE_NAME="unset"
+
 #K8S_INSTALLER="rancher"
 #RANCHER_RKE_RELEASE="v1.0.6"
 
@@ -677,11 +682,6 @@ TIMER_START
 [ -z "$API_KEY" ] && die "API_KEY is unset"
 [ -z "$ORG_ID"  ] && die "ORG_ID is unset"
 [ -z "$OWNER_ID_OR_EMAIL" ] && die "OWNER_ID_OR_EMAIL is unset"P
-
-#export PRIVATE_IP=$(hostname -i)
-export PRIVATE_IP=$(ec2metadata --local-ipv4)
-export PUBLIC_IP=$(ec2metadata --public-ipv4)
-export NODE_NAME="unset"
 
 [ -z "$PRIVATE_IP" ] && die "PRIVATE_IP is unset"P
 [ -z "$PUBLIC_IP"  ] && die "PUBLIC_IP is unset"P
