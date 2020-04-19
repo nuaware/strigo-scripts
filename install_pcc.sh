@@ -38,12 +38,12 @@ CREATE_CONSOLE() {
     . /root/.profile
 set -x
     #./linux/twistcli console export kubernetes --service-type LoadBalancer
-    #env | grep TW_A_K
-    env | grep TW_A_K
-    #[ ! -z "$TW_A_K" ] && TW_CONS_OPTS="--registry-token $TW_A_K"
-    export TW_CONS_OPTS="--registry-token $TW_A_K"
+    #env | grep PRISMA_PCC_ACCESS
+    env | grep PRISMA_PCC_ACCESS
+    #[ ! -z "$PRISMA_PCC_ACCESS" ] && TW_CONS_OPTS="--registry-token $PRISMA_PCC_ACCESS"
+    #export TW_CONS_OPTS="--registry-token $PRISMA_PCC_ACCESS"
 
-    ./linux/twistcli console export kubernetes --registry-token "$TW_A_K" --service-type NodePort
+    ./linux/twistcli console export kubernetes --registry-token "$PRISMA_PCC_ACCESS" --service-type NodePort
     #./linux/twistcli console export kubernetes $TW_CONS_OPTS --service-type NodePort
 #set +x
 
@@ -133,8 +133,8 @@ GET_ADMIN_NODE_PORT() {
 }
 
 INIT_CONSOLE() {
-    [ -z "$PRISMA_PCC_TAR" ] && die "$PRISMA_PCC_TAR env var is unset"
-    [ -z "$TW_A_K"         ] && die "$TW_A_K env var is unset"
+    [ -z "$PRISMA_PCC_TAR"    ] && die "$PRISMA_PCC_TAR env var is unset"
+    [ -z "$PRISMA_PCC_ACCESS" ] && die "$PRISMA_PCC_ACCESS env var is unset"
 
     ping -c 1 registry-auth.twistlock.com || die " Cant reach registry";
     UNPACK_TAR

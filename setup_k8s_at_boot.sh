@@ -9,7 +9,7 @@ UPGRADE_KUBE_LATEST=1
 KUBERNETES_VERSION=""
 
 export PRISMA_PCC_TAR=/tmp/prisma_cloud_compute_edition_20_04_163.tar.gz
-export TW_A_K
+export PRISMA_PCC_ACCESS
 INSTALL_PCC_SH_URL=https://raw.githubusercontent.com/mjbright/strigo-scripts/master/install_pcc.sh
 
 CNI_YAMLS="https://docs.projectcalico.org/manifests/calico.yaml"
@@ -34,14 +34,8 @@ export NODE_NAME="unset"
 #BIN=/root/bin
 BIN=/usr/local/bin
 
-# TODO: move variable to user-data:
-INSTALL_KUBELAB=1
-
-# TODO: move variable to user-data: (only download for workshops)
-DOWNLOAD_PCC_TWISTLOCK=1
-INSTALL_PCC_TWISTLOCK=1
 [ $INSTALL_PCC_TWISTLOCK -eq 0 ] &&
-    [ ! -z "$TW_A_K" ] && echo "export TW_A_K=$TW_A_K" >> /root/.profile
+    [ ! -z "$PRISMA_PCC_ACCESS" ] && echo "export PRISMA_PCC_ACCESS=$PRISMA_PCC_ACCESS" >> /root/.profile
 
 # Terraform
 INSTALL_TERRAFORM=1

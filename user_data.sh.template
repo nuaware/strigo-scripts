@@ -12,6 +12,11 @@ env # Before sensitive values !!
 export ORG_ID="__ORG_ID__"
 export API_KEY="__API_KEY__"
 export OWNER_ID_OR_EMAIL="__OWNER_ID_OR_EMAIL__"
+export PRISMA_PCC_ACCESS="__PRISMA_ACCESS_KEY__"
+
+INSTALL_KUBELAB=1
+DOWNLOAD_PCC_TWISTLOCK=1
+INSTALL_PCC_TWISTLOCK=1
 
 export NUM_NODES=2 # Must match !!
 
@@ -26,6 +31,8 @@ wget -qO $DIR/get_workspaces_info.py \
 chmod +x $DIR/$BOOT_SETUP_SH
 chmod +x $DIR/get_workspaces_info.py
 
-$DIR/$BOOT_SETUP_SH
+export REGISTER_URL="__REGISTER_URL__"
+
+bash -x $DIR/$BOOT_SETUP_SH
 
 
