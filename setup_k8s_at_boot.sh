@@ -5,6 +5,10 @@ SCRIPT_DIR=$(dirname $0)
 UPGRADE_KUBE_LATEST=0
 UPGRADE_KUBE_LATEST=1
 
+export PRISMA_PCC_TAR=/tmp/prisma_cloud_compute_edition_20_04_163.tar.gz
+export TW_A_K
+INSTALL_PCC_SH_URL=https://raw.githubusercontent.com/mjbright/strigo-scripts/master/install_pcc.sh
+
 CNI_YAMLS="https://docs.projectcalico.org/manifests/calico.yaml"
 POD_CIDR="192.168.0.0/16"
 
@@ -27,10 +31,10 @@ export NODE_NAME="unset"
 #BIN=/root/bin
 BIN=/usr/local/bin
 
-# TODO: move to user-data:
+# TODO: move variable to user-data:
 INSTALL_KUBELAB=1
 
-# TODO: move to user-data: (only download for workshops)
+# TODO: move variable to user-data: (only download for workshops)
 DOWNLOAD_PCC_TWISTLOCK=1
 INSTALL_PCC_TWISTLOCK=1
 [ $INSTALL_PCC_TWISTLOCK -eq 0 ] &&
@@ -346,13 +350,10 @@ INSTALL_KUBELAB() {
 
     cat > /tmp/kubelab.sh << EOF
 
+set -x
+
 # Create modified config.kubelab
 # - needed so kubectl in cluster will use 'default' namespace not 'kubelab':
-#
-# TODO: add note in kubelab/README.md
-# TODO: Match on/modify after context name
-
-set -x
 
 export KUBECONFIG=/etc/kubernetes/admin.conf
 
@@ -388,193 +389,10 @@ INSTALL_PCC_TWISTLOCK() {
     done
     ls -altr /var/nfs/general/MOUNTED_from_NODE_worker* | SECTION_LOG
 
-    cat > /tmp/install_pcc.sh <<EOF
-#!/bin/bash
-
-TAR=/tmp/prisma_cloud_compute_edition_20_04_163.tar.gz
-
-PUBLIC_HOST=$(ec2metadata --public-host)
-ADMIN_USER="admin"
-
-SECTION_LOG() {
-    if [ -z "$1" ]; then
-        tee -a ${SECTION_LOG}
-    else
-        echo "$*" >> ${SECTION_LOG}
-    fi
-}
-
-die() {
-    echo "$0: die - $*" >&2 | SECTION_LOG
-    exit 1
-}
-
-[ `id -un` != 'root' ] && die "$0: run as root"
-
-UNPACK_TAR() {
-    echo; echo "---- Unpacking tar [$TAR] -----"
-
-    tar xvzf $TAR  -C ~/twistlock
-
-    { echo; echo "---- Removing tar file to win back disk space:";
-    df -h / ; echo "rm  -f $TAR"; rm  -f $TAR; df -h /;
-    echo "----"
-    } | SECTION_LOG
-}
-
-CREATE_CONSOLE() {
-    echo; echo "---- Creating Prisma Console"
-
-    . /root/.profile
-set -x
-    #./linux/twistcli console export kubernetes --service-type LoadBalancer
-    #env | grep TW_A_K
-    env | grep TW_A_K
-    #[ ! -z "$TW_A_K" ] && TW_CONS_OPTS="--registry-token $TW_A_K"
-    export TW_CONS_OPTS="--registry-token $TW_A_K"
-
-    ./linux/twistcli console export kubernetes --registry-token "$TW_A_K" --service-type NodePort
-    #./linux/twistcli console export kubernetes $TW_CONS_OPTS --service-type NodePort
-#set +x
-
-    [ ! -f twistlock_console.yaml ] && die "Failed to export console manifest"
-
-    ls          -altr twistlock_console.yaml
-    kubectl create -f twistlock_console.yaml | SECTION_LOG
-}
-
-CREATE_PV() {
-    echo; echo "---- Creating Prisma Console PV"
-
-    mkdir -p /nfs/general/twistlock-pv
-    chmod 777 /nfs/general/twistlock-pv/
-    cat > /tmp/twistlock-pv.yaml <<YAML_EOF
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-    name: twistlock-pv
-    labels:
-        type: local
-spec:
-    capacity:
-        storage: 100Gi
-    accessModes:
-    - ReadWriteMany
-    - ReadWriteOnce
-    hostPath:
-        path: "/nfs/general/twistlock-pv"
-YAML_EOF
-
-    MISSING='
-    annotations:
-        volume.beta.kubernetes.io/mount-options: "nolock,noatime,bg"
-	'
-
-    PCC_REC='
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-    name: twistlock-console
-    labels:
-        app-volume: twistlock-console
-    annotations:
-        volume.beta.kubernetes.io/mount-options: "nolock,noatime,bg"
-'
-
-    kubectl create -f /tmp/twistlock-pv.yaml | SECTION_LOG
-}
-
-GET_ADMIN_NODE_PORT() {
-    kubectl -n twistlock get all
-
-    kubectl get service -n twistlock
-    #kubectl get service -w -n twistlock
-    #NAME                TYPE           CLUSTER-IP    EXTERNAL-IP   PORT(S)                         AGE
-    #twistlock-console   LoadBalancer   10.111.3.10   <pending>     8084:30357/TCP,8083:31707/TCP   27m
-
-    kubectl get service -o wide -n twistlock
-    kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*]
-    #kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*]
-    kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*] | SECTION_LOG
-
-    NODE_PORTS=\$(kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*].nodePort --no-headers)
-    echo NODE_PORTS=\$NODE_PORTS
-
-    MASTER_PUBLIC_IP=\$(ec2metadata --public-ipv4)
-    echo MASTER_PUBLIC_IP=\$MASTER_PUBLIC_IP
-
-    PORT1=\${NODE_PORTS%,*}
-    PORT2=\${NODE_PORTS#*,}
-    #echo commication URL=https://\${MASTER_PUBLIC_IP}:\${PORT1}
-
-    #echo Management URL=https://\${MASTER_PUBLIC_IP}:\${PORT2}
-    URL=https://\${PUBLIC_HOST}:\${PORT2}
-    echo PrismaCloud Console/Management URL=\$URL | SECTION_LOG
-    echo \$URL > /tmp/PCC.console.url
-    ADMIN_NODE_PORT=\$PORT2
-
-    #$ kubectl get service -o wide -n twistlock
-    #NAME                TYPE           CLUSTER-IP    EXTERNAL-IP   PORT(S)                         AGE   SELECTOR
-    #twistlock-console   LoadBalancer   10.111.3.10   <pending>     8084:30357/TCP,8083:31707/TCP   27m   name=twistlock-console
-
-    # Enter access token (required for pulling the Console image):
-    # Neither storage class nor persistent volume labels were provided, using cluster default behavior
-    # Saving output file to /home/ubuntu/twistlock/twistlock_console.yaml
-}
-
-ping -c 1 registry-auth.twistlock.com || { die " Cant reach registry"; }
-
-mkdir -p /root/twistlock
-cd       /root/twistlock
-
-UNPACK_TAR
-CREATE_PV
-CREATE_CONSOLE
-GET_ADMIN_NODE_PORT
-{ CMD="kubectl -n twistlock describe pod"; echo "-- \$CMD"; \$CMD; } | grep -A 20 Events: | SECTION_LOG
-
-cat > /tmp/create_defender.sh <<INNER_EOF
-#!/bin/bash
-
-[ `id -un` != 'root' ] && die "\$0: run as root"
-
-SECTION_LOG() {
-    if [ -z "\$1" ]; then
-        tee -a ${SECTION_LOG}
-    else
-        echo "\$*" >> ${SECTION_LOG}
-    fi
-}
-
-CREATE_DEFENDER() {
-    PUBLIC_HOST=\$(ec2metadata --public-host)
-    ADMIN_USER="admin"
-
-    ./linux/twistcli defender export kubernetes --address https://\${PUBLIC_HOST}:\${ADMIN_NODE_PORT} --user \$ADMIN_USER --cluster-address twistlock-console
-
-    [ ! -f defender.yaml ] && die "Failed to export defender manifest"
-
-    kubectl create -f defender.yaml | SECTION_LOG
-}
-
-[ \$(id -un) != 'root' ] && die "\$0: run as root"
-
-cd /root/twistlock
-
-ADMIN_NODE_PORT=\$ADMIN_NODE_PORT
-CREATE_DEFENDER
-
-INNER_EOF
-
-    echo
-    echo "==== /tmp/create_defender must be run manually after creation of admin account (via console)"
-    chmod +x /tmp/create_defender.sh
-    # /tmp/create_defender.sh
-
-EOF
+    wget -O /tmp/install_pcc.sh $INSTALL_PCC_SH_URL
 
     chmod +x /tmp/install_pcc.sh
-    /tmp/install_pcc.sh
+    /tmp/install_pcc.sh --init-console
 }
 
 INSTALL_HELM() {
@@ -622,8 +440,8 @@ DOWNLOAD_PCC_TWISTLOCK() {
     TAR="/tmp/prisma_cloud_compute_edition_${TWISTLOCK_PCC_RELEASE}.tar.gz"
     URL="https://cdn.twistlock.com/releases/6e6c2d6a/prisma_cloud_compute_edition_${TWISTLOCK_PCC_RELEASE}.tar.gz"
 
-    wget -O $TAR $URL
-    ls -altrh $TAR | SECTION_LOG
+    wget -O $PRISMA_PCC_TAR $URL
+    ls -altrh $PRISMA_PCC_TAR | SECTION_LOG
 }
 
 REGISTER_INSTALL_START() {
@@ -651,8 +469,8 @@ INSTALL_KUBERNETES() {
     esac
 }
 
-# TODO: setup NFS share across nodes
-# https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nfs-mount-on-ubuntu-18-04
+# Setup NFS share across nodes
+# - https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nfs-mount-on-ubuntu-18-04
 SETUP_NFS() {
     NODE_TYPE=$1; shift
 
