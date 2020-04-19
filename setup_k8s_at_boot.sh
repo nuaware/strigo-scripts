@@ -463,6 +463,7 @@ UNPACK_TAR
 CREATE_PV
 CREATE_CONSOLE
 GET_ADMIN_NODE_PORT
+{ CMD="kubectl -n twistlock describe pod"; echo "-- $CMD"; $CMD; } | grep -A 20 Events: | SECTION_LOG
 
 cat > /tmp/create_defender.sh <<INNER_EOF
 
