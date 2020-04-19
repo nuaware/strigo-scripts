@@ -2,6 +2,9 @@
 
 SCRIPT_DIR=$(dirname $0)
 
+UPGRADE_KUBE_LATEST=0
+UPGRADE_KUBE_LATEST=1
+
 CNI_YAMLS="https://docs.projectcalico.org/manifests/calico.yaml"
 POD_CIDR="192.168.0.0/16"
 
@@ -531,6 +534,7 @@ GET_ADMIN_NODE_PORT
 { CMD="kubectl -n twistlock describe pod"; echo "-- \$CMD"; \$CMD; } | grep -A 20 Events: | SECTION_LOG
 
 cat > /tmp/create_defender.sh <<INNER_EOF
+#!/bin/bash
 
 [ `id -un` != 'root' ] && die "\$0: run as root"
 
@@ -553,13 +557,10 @@ CREATE_DEFENDER() {
     kubectl create -f defender.yaml | SECTION_LOG
 }
 
-[ `id -un` != 'root' ] && die "$0: run as root"
+[ \$(id -un) != 'root' ] && die "\$0: run as root"
 
 cd /root/twistlock
 
-#GET_ADMIN_NODE_PORT
-
-ADMIN_NODE_PORT=$ADMIN_NODE_PORT
 ADMIN_NODE_PORT=\$ADMIN_NODE_PORT
 CREATE_DEFENDER
 
@@ -633,19 +634,6 @@ REGISTER_INSTALL_END() {
     wget -qO - "$REGISTER_URL/${EVENT}_${WORKSPACE}_${NODE_NAME}_${PUBLIC_IP}_provisioning_END"
 }
 
-## -- MAIN ---------------------------------------------------------------------
-
-apt-get update && apt-get install -y jq zip
-
-id -un
-
-#ping -c 1 $LAB_Virtual_Machine_1_PRIVATE_IP #ping -c 1 $LAB_Virtual_Machine_2_PRIVATE_IP 
-#sudo -u ubuntu ssh -o StrictHostKeyChecking=no $LAB_Virtual_Machine_1_PRIVATE_IP  uptime
-SECTION START_DOCKER_plus
-# SECTION GET_LAB_RESOURCES - CAREFUL THIS WILL EXPOSE YOUR API_KEY/ORG_ID
-
-set_EVENT_WORKSPACE_NODES
-
 INSTALL_KUBERNETES() {
     case $K8S_INSTALLER in
         "kubeadm")
@@ -672,7 +660,6 @@ SETUP_NFS() {
 
     case $NODE_TYPE in
         master)
-            apt-get install -y nfs-kernel-server
 	    mkdir -p /var/nfs/general /nfs
 	    chown nobody:nogroup /var/nfs/general
 
@@ -694,7 +681,6 @@ SETUP_NFS() {
 	    date >> /nfs/general/MOUNTED_from_NODE_$(hostname).txt
             ;;
         *)
-            apt-get install -y nfs-common
 	    mkdir -p /nfs/general
 
 	    mount master:/var/nfs/general /nfs/general
@@ -743,8 +729,24 @@ echo "Checking for Events owned by '$OWNER_ID_OR_EMAIL'"
 
 [ ! -z "$REGISTER_URL" ] && SECTION REGISTER_INSTALL_START
 
+## -- MAIN ---------------------------------------------------------------------
+
+APT_INSTALL_PACKAGES="jq zip"
+
+[ $UPGRADE_KUBE_LATEST -eq 1 ] && APT_INSTALL_PACKAGES+=" kubeadm kubelet kubectl"
+
+SECTION START_DOCKER_plus
+# SECTION GET_LAB_RESOURCES - CAREFUL THIS WILL EXPOSE YOUR API_KEY/ORG_ID
+
+set_EVENT_WORKSPACE_NODES
+
 # Perform all kubeadm operations from Master1:
 if [ $NODE_IDX -eq 0 ] ; then
+    APT_INSTALL_PACKAGES+=" nfs-kernel-server"
+
+    #apt-get update && apt-get install -y $APT_INSTALL_PACKAGES
+    apt-get update  && apt-get upgrade -y $APT_INSTALL_PACKAGES
+
     SECTION CONFIG_NODES_ACCESS
     SECTION INSTALL_KUBERNETES
     [ $INSTALL_KUBELAB -ne 0 ]        && SECTION INSTALL_KUBELAB
@@ -756,6 +758,11 @@ if [ $NODE_IDX -eq 0 ] ; then
 else
     let NUM_WORKERS=NUM_NODES-NUM_MASTERS
     [ $NUM_MASTERS -gt 1 ] && die "Not implemented NUM_MASTERS > 1"
+
+    APT_INSTALL_PACKAGES+=" nfs-common"
+
+    #apt-get update && apt-get install -y $APT_INSTALL_PACKAGES
+    apt-get update  && apt-get upgrade -y $APT_INSTALL_PACKAGES
 
     while [ ! -f /tmp/NODE_NAME ]; do sleep 5; done
     #NODE_NAME=$(cat /tmp/NODE_NAME)
