@@ -334,7 +334,7 @@ SETUP_KUBECONFIG() {
 
 KUBECTL_VERSION() {
     kubectl version -o yaml
-    echo "kubectl version: $(kubectl version --short)" | tr '\n' ',' | sed 's/,/ /g' | SECTION_LOG
+    { echo "kubectl version: $(kubectl version --short)" | tr '\n' ',' | sed 's/,/ /g'; echo; } | SECTION_LOG
 }
 
 INSTALL_KUBELAB() {
@@ -383,6 +383,7 @@ INSTALL_PCC_TWISTLOCK() {
 	echo "Waiting for worker nodes to mount NFS share ..."
         let LOOP=LOOP+1; sleep 12; [ $LOOP -ge $MAX_LOOP ] && die "Failed waiting for $WORKER_NODE_NAME to mount NFS share"
     done
+    ls -altr /var/nfs/general/MOUNTED_from_NODE_worker* | SECTION_LOG
 
     cat > /tmp/install_pcc.sh <<EOF
 #!/bin/bash
@@ -493,19 +494,21 @@ GET_ADMIN_NODE_PORT() {
     #kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*]
     kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*] | SECTION_LOG
 
-    NODE_PORTS=$(kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*].nodePort --no-headers)
-    echo NODE_PORTS=$NODE_PORTS
+    NODE_PORTS=\$(kubectl get service -n twistlock -o custom-columns=P:.spec.ports[*].nodePort --no-headers)
+    echo NODE_PORTS=\$NODE_PORTS
 
-    MASTER_PUBLIC_IP=$(ec2metadata --public-ipv4)
-    echo MASTER_PUBLIC_IP=$MASTER_PUBLIC_IP
+    MASTER_PUBLIC_IP=\$(ec2metadata --public-ipv4)
+    echo MASTER_PUBLIC_IP=\$MASTER_PUBLIC_IP
 
-    PORT1=${NODE_PORTS%,*}
-    PORT2=${NODE_PORTS#*,}
-    #echo commication URL=https://${MASTER_PUBLIC_IP}:${PORT1}
+    PORT1=\${NODE_PORTS%,*}
+    PORT2=\${NODE_PORTS#*,}
+    #echo commication URL=https://\${MASTER_PUBLIC_IP}:\${PORT1}
 
-    #echo Management URL=https://${MASTER_PUBLIC_IP}:${PORT2}
-    echo PrismaCloud Console/Management URL=https://${PUBLIC_HOST}:${PORT2} | SECTION_LOG
-    ADMIN_NODE_PORT=$PORT2
+    #echo Management URL=https://\${MASTER_PUBLIC_IP}:\${PORT2}
+    URL=https://\${PUBLIC_HOST}:\${PORT2}
+    echo PrismaCloud Console/Management URL=\$URL | SECTION_LOG
+    echo \$URL > /tmp/PCC.console.url
+    ADMIN_NODE_PORT=\$PORT2
 
     #$ kubectl get service -o wide -n twistlock
     #NAME                TYPE           CLUSTER-IP    EXTERNAL-IP   PORT(S)                         AGE   SELECTOR
@@ -525,15 +528,17 @@ UNPACK_TAR
 CREATE_PV
 CREATE_CONSOLE
 GET_ADMIN_NODE_PORT
-{ CMD="kubectl -n twistlock describe pod"; echo "-- $CMD"; $CMD; } | grep -A 20 Events: | SECTION_LOG
+{ CMD="kubectl -n twistlock describe pod"; echo "-- \$CMD"; \$CMD; } | grep -A 20 Events: | SECTION_LOG
 
 cat > /tmp/create_defender.sh <<INNER_EOF
 
+[ `id -un` != 'root' ] && die "\$0: run as root"
+
 SECTION_LOG() {
-    if [ -z "$1" ]; then
+    if [ -z "\$1" ]; then
         tee -a ${SECTION_LOG}
     else
-        echo "$*" >> ${SECTION_LOG}
+        echo "\$*" >> ${SECTION_LOG}
     fi
 }
 
