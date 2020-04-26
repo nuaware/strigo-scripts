@@ -586,6 +586,8 @@ WAIT_POD_RUNNING() {
 
 TIMER_START
 
+SECTION_LOG "PUBLIC_IP=$PUBLIC_IP"
+
 [ -z "$API_KEY"           ] && die "API_KEY is unset"
 [ -z "$ORG_ID"            ] && die "ORG_ID is unset"
 [ -z "$OWNER_ID_OR_EMAIL" ] && die "OWNER_ID_OR_EMAIL is unset"P
