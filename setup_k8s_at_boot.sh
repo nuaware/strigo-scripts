@@ -132,26 +132,26 @@ set_EVENT_WORKSPACE_NODES() {
     EVENT_INFO=/tmp/event.log
     cp /dev/null $EVENT_LOG
 
-    _NUM_NODES=$($SCRIPT_DIR/get_workspaces_info.py -nodes | tee -a $EVENT_LOG)
+    _NUM_NODES=$($SCRIPT_DIR/get_strigo_info.py -nodes | tee -a $EVENT_LOG)
     while [ $_NUM_NODES -lt $NUM_NODES ]; do
         echo "[ '$_NUM_NODES' -lt '$NUM_NODES' ] - waiting for more nodes to become available ..."
 	sleep 5
-        _NUM_NODES=$($SCRIPT_DIR/get_workspaces_info.py -nodes | tee -a $EVENT_LOG)
+        _NUM_NODES=$($SCRIPT_DIR/get_strigo_info.py -nodes | tee -a $EVENT_LOG)
         [ -z "$_NUM_NODES" ] && _NUM_NODES=0
     done
 
     let NUM_WORKERS=NUM_NODES-NUM_MASTERS
 
-    NODE_IDX=$($SCRIPT_DIR/get_workspaces_info.py -idx | tee -a $EVENT_LOG)
+    NODE_IDX=$($SCRIPT_DIR/get_strigo_info.py -idx | tee -a $EVENT_LOG)
     [ -z "$NODE_IDX"  ] && die "NODE_IDX is unset"
 
-    EVENT=$($SCRIPT_DIR/get_workspaces_info.py -e | tee -a $EVENT_LOG)
+    EVENT=$($SCRIPT_DIR/get_strigo_info.py -e | tee -a $EVENT_LOG)
     [ -z "$EVENT"  ] && die "EVENT is unset"
 
-    WORKSPACE=$($SCRIPT_DIR/get_workspaces_info.py -w | tee -a $EVENT_LOG)
+    WORKSPACE=$($SCRIPT_DIR/get_strigo_info.py -w | tee -a $EVENT_LOG)
     [ -z "$WORKSPACE"  ] && die "WORKSPACE is unset"
 
-    $SCRIPT_DIR/get_workspaces_info.py -v -ips | tee -a $EVENT_LOG
+    $SCRIPT_DIR/get_strigo_info.py -v -ips | tee -a $EVENT_LOG
 }
 
 START_DOCKER_plus() {
@@ -210,7 +210,7 @@ CONFIG_NODES_ACCESS() {
     for WORKER in $(seq $NUM_WORKERS); do
         let NODE_NUM=NUM_MASTERS+WORKER-1
 
-        WORKER_IPS=$($SCRIPT_DIR/get_workspaces_info.py -ips $NODE_NUM)
+        WORKER_IPS=$($SCRIPT_DIR/get_strigo_info.py -ips $NODE_NUM)
         WORKER_PRIVATE_IP=${WORKER_IPS%,*};
         WORKER_PUBLIC_IP=${WORKER_IPS#*,};
         WORKER_PRIVATE_IPS+=" $WORKER_PRIVATE_IP"
