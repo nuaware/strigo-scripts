@@ -1,0 +1,63 @@
+#!/bin/bash
+
+export SECTION_LOG=/tmp/SECTION.log
+
+ERROR() {
+    echo "******************************************************"
+    echo "** ERROR: $*"
+    echo "******************************************************"
+}
+
+SECTION_LOG() {
+    if [ -z "$1" ]; then
+        tee -a ${SECTION_LOG}
+    else
+        echo "$*" >> ${SECTION_LOG}
+    fi
+}
+
+SECTION() {
+    SECTION="$*"
+
+    echo; echo "== [$(date)] ========== $SECTION =================================" | SECTION_LOG
+    $*
+}
+
+die() {
+    ERROR $*
+    echo "$0: die - Installation failed" >&2 | SECTION_LOG
+    echo $* >&2
+    exit 1
+}
+
+# START: TIMER FUNCTIONS ================================================
+
+TIMER_START() {
+    START_S=`date +%s`
+}
+
+TIMER_STOP() {
+    END_S=`date +%s`
+    let TOOK=END_S-START_S
+
+    TIMER_hhmmss $TOOK
+    echo "$*Took $TOOK secs [${HRS}h${MINS}m${SECS}]"
+}
+
+TIMER_hhmmss() {
+    _REM_SECS=$1; shift
+
+    let SECS=_REM_SECS%60
+
+    let _REM_SECS=_REM_SECS-SECS
+
+    let MINS=_REM_SECS/60%60
+
+    let _REM_SECS=_REM_SECS-60*MINS
+
+    let HRS=_REM_SECS/3600
+
+    [ $SECS -lt 10 ] && SECS="0$SECS"
+    [ $MINS -lt 10 ] && MINS="0$MINS"
+}
+

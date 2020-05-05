@@ -1,0 +1,53 @@
+#!/bin/bash
+
+DIR=/root/tmp; mkdir -p $DIR
+
+exec > $DIR/user-data.op 2>&1
+
+env # Before sensitive values !!
+
+# SET Environment variables:
+export CLASSID="__CLASSID__"
+export ORG_ID="__ORG_ID__"
+export API_KEY="__API_KEY__"
+export OWNER_ID_OR_EMAIL="__OWNER_ID_OR_EMAIL__"
+export PRISMA_PCC_ACCESS="__PRISMA_ACCESS_KEY__"
+export REGISTER_URL="__REGISTER_URL__"
+
+export PRIVATE_IP=$(ec2metadata --local-ipv4)
+export PUBLIC_IP=$(ec2metadata --public-ipv4)
+
+GET()     { URL=$1;FILE=/tmp/${URL##*/};wget -O $FILE $URL;chmod +x $FILE;}
+GET_RUN() { GET $1; shift; $FILE $*; }
+
+GET_functions_fn=https://raw.githubusercontent.com/mjbright/strigo-scripts/master/functions.fn
+
+GET_STRIGO_INFO=https://raw.githubusercontent.com/mjbright/strigo-scripts/master/get_strigo_info.py
+
+NODES_SETUP_URL=https://raw.githubusercontent.com/mjbright/strigo-scripts/master/setup_nodes.sh
+
+KUBERNETES_URL=https://raw.githubusercontent.com/mjbright/strigo-scripts/master/install_k8s.sh
+
+PRISMACC_URL=https://raw.githubusercontent.com/mjbright/strigo-scripts/master/install_pcc.sh
+
+GET     $GET_functions_fn
+GET     $GET_STRIGO_INFO
+
+USERS="ubuntu+sudo"
+#USERS="student+sudo"
+export NUM_NODES=2 # Must match !!
+export NODE_NAMES="master worker1"
+GET_RUN $NODES_SETUP_URL --users "$USERS" --node-names "$NODE_NAMES"
+
+# To force a specific version, e.g. "stable-1" or "v1.18.2" set to version here and set UPGRADE_KUBE_LATEST=1
+export K8S_RELEASE="v1.18.2"
+export K8S_INSTALLER="kubeadm"
+export UPGRADE_KUBE_LATEST=1
+GET_RUN $KUBERNETES_URL
+
+export TWISTLOCK_PCC_RELEASE=20_04_163
+GET_RUN $PRISMACC_URL
+
+#export INSTALL_TERRAFORM=1
+#export INSTALL_HELM=1
+
