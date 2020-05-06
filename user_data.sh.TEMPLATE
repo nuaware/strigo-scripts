@@ -7,7 +7,7 @@ exec > $DIR/user-data.op 2>&1
 env # Before sensitive values !!
 
 export CLASSID="__CLASSID__" ORG_ID="__ORG_ID__" API_KEY="__API_KEY__" OWNER_ID_OR_EMAIL="__OWNER_ID_OR_EMAIL__"
-export PRISMA_PCC_ACCESS="__PRISMA_ACCESS_KEY__" REGISTER_URL="__REGISTER_URL__"
+export PRISMA_PCC_ACCESS="__PRISMA_PCC_ACCESS__" REGISTER_URL="__REGISTER_URL__"
 
 cd /root/; git clone https://github.com/mjbright/strigo-scripts
 cd strigo-scripts; cp -a *.sh *.py /tmp
