@@ -2,6 +2,8 @@
 
 DIR=/root/tmp; mkdir -p $DIR
 
+REPO_ZIP=https://github.com/mjbright/strigo-scripts/archive/master.zip
+
 exec > $DIR/user-data.op 2>&1
 env # Before sensitive values !!
 
@@ -11,6 +13,10 @@ export API_KEY="__API_KEY__"
 export OWNER_ID_OR_EMAIL="__OWNER_ID_OR_EMAIL__"
 export PRISMA_PCC_ACCESS="__PRISMA_ACCESS_KEY__"
 export REGISTER_URL="__REGISTER_URL__"
+
+cd /root/; wget -O /root/master.zip $REPO_ZIP; unzip master.zip
+cd strigo-scripts-master; cp -a *.sh *.py /tmp
+
 export INSTALL_KUBELAB=1
 export DOWNLOAD_PCC_TWISTLOCK=1
 export INSTALL_PCC_TWISTLOCK=1
@@ -22,14 +28,12 @@ export K8S_INSTALLER="kubeadm"
 export TWISTLOCK_PCC_RELEASE=20_04_163
 export INSTALL_TERRAFORM=1
 export INSTALL_HELM=1
+
 export NUM_NODES=2 # Must match !!
+export NODE_NAMES="master worker1"
+export USERS="ubuntu:sudo"
+#export USERS="student:sudo"
 
-BOOT_SETUP_SH=setup_k8s_at_boot.sh
-wget -qO $DIR/$BOOT_SETUP_SH \
-    https://raw.githubusercontent.com/mjbright/strigo-scripts/master/setup_k8s_at_boot.sh
-wget -qO $DIR/get_workspaces_info.py \
-    https://raw.githubusercontent.com/mjbright/strigo-scripts/master/get_workspaces_info.py
+./setup_k8s_at_boot.sh
 
-chmod +x $DIR/$BOOT_SETUP_SH $DIR/get_workspaces_info.py
-bash -x $DIR/$BOOT_SETUP_SH
 
