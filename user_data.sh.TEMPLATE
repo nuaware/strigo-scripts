@@ -1,7 +1,6 @@
 #!/bin/bash
 
 DIR=/root/tmp; mkdir -p $DIR
-
 REPO_ZIP=https://github.com/mjbright/strigo-scripts/archive/master.zip
 
 exec > $DIR/user-data.op 2>&1
@@ -34,6 +33,4 @@ export NODE_NAMES="master worker1"
 export USERS="ubuntu:sudo"
 #export USERS="student:sudo"
 
-./setup_k8s_at_boot.sh
-
-
+/tmp/setup_k8s_at_boot.sh
