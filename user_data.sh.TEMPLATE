@@ -9,7 +9,7 @@ env # Before sensitive values !!
 export CLASSID="__CLASSID__" ORG_ID="__ORG_ID__" API_KEY="__API_KEY__" OWNER_ID_OR_EMAIL="__OWNER_ID_OR_EMAIL__"
 export PRISMA_PCC_ACCESS="__PRISMA_ACCESS_KEY__" REGISTER_URL="__REGISTER_URL__"
 
-apt-get -y install unzip zip
+set -x; apt-get -y install unzip zip
 cd /root/; wget -O /root/master.zip $REPO_ZIP; unzip master.zip
 cd strigo-scripts-master; cp -a *.sh *.py /tmp
 
