@@ -9,9 +9,8 @@ env # Before sensitive values !!
 export CLASSID="__CLASSID__" ORG_ID="__ORG_ID__" API_KEY="__API_KEY__" OWNER_ID_OR_EMAIL="__OWNER_ID_OR_EMAIL__"
 export PRISMA_PCC_ACCESS="__PRISMA_ACCESS_KEY__" REGISTER_URL="__REGISTER_URL__"
 
-set -x; while ! apt-get -y install unzip zip; do sleep 2; done
-cd /root/; wget -O /root/master.zip $REPO_ZIP; unzip master.zip
-cd strigo-scripts-master; cp -a *.sh *.py /tmp
+cd /root/; git clone https://github.com/mjbright/strigo-scripts
+cd strigo-scripts; cp -a *.sh *.py /tmp
 
 export INSTALL_KUBELAB=1
 export DOWNLOAD_PCC_TWISTLOCK=1
