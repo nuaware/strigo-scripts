@@ -5,7 +5,10 @@ die() {
     exit 1
 }
 
-. nuaware_vars.rc
+[ -z "$1"   ] && die "Usage: $0 <rcfile>"
+[ ! -f "$1" ] && die "Usage: No such rcfile as <$1>"
+
+. $1
 
 VARS="CLASSID ORG_ID API_KEY OWNER_ID_OR_EMAIL PRISMA_PCC_ACCESS REGISTER_URL"
 
