@@ -1,6 +1,6 @@
 *PRIVATE*
+*_vars.rc
 BACKUPS/
-nuaware_vars.rc
 scp_files.sh
 tmp.from.vm
 .jupyter.master.ip
