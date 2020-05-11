@@ -167,10 +167,10 @@ cd       /root/twistlock
 
 if [ "$1" = "--init-console" ];then
     INIT_CONSOLE
+    CLEANUP_TWISTLOCK
 else
     GET_ADMIN_NODE_PORT
     CREATE_DEFENDER
-    CLEANUP_TWISTLOCK
 fi
 
 
