@@ -1,8 +1,7 @@
 #!/bin/bash
 
-
 PUBLIC_HOST=$(ec2metadata --public-host)
-ADMIN_USER="admin"
+ADMIN_USER="pccadmin"
 
 SECTION_LOG=/tmp/SECTION.log
 
@@ -145,9 +144,6 @@ INIT_CONSOLE() {
 }
 
 CREATE_DEFENDER() {
-    PUBLIC_HOST=$(ec2metadata --public-host)
-    ADMIN_USER="admin"
-
     ./linux/twistcli defender export kubernetes --address https://${PUBLIC_HOST}:${ADMIN_NODE_PORT} --user $ADMIN_USER --cluster-address twistlock-console
 
     [ ! -f defender.yaml ] && die "Failed to export defender manifest"
