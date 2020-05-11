@@ -26,6 +26,6 @@ export NODE_NAMES="master worker1"
 export USERS="ubuntu:sudo"
 #export USERS="student:sudo"
 
-echo $PRISMA_PCC_LICENSE > /tmp//tmp/PCC.license.txt
+echo $PRISMA_PCC_LICENSE > /tmp/PCC.license.txt
 
 /tmp/setup_k8s_at_boot.sh
