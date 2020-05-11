@@ -151,6 +151,12 @@ CREATE_DEFENDER() {
     kubectl create -f defender.yaml | SECTION_LOG
 }
 
+CLEANUP_TWISTLOCK_2() {
+    CMD="rm -rf twistlock/linux"
+    { echo; echo "---- Cleaning up unused twistlock files ---------"
+      df -h /; echo "-- $CMD"; $CMD; df -h /; } | SECTION_LOG
+}
+
 CLEANUP_TWISTLOCK() {
     cd /root/
 
@@ -171,6 +177,7 @@ if [ "$1" = "--init-console" ];then
 else
     GET_ADMIN_NODE_PORT
     CREATE_DEFENDER
+    CLEANUP_TWISTLOCK_2
 fi
 
 
