@@ -82,7 +82,11 @@ SECTION_LOG() {
 SECTION() {
     SECTION="$*"
 
-    echo; echo "== [$(date)] ========== $SECTION =================================" | SECTION_LOG
+    echo;
+    { 
+        df -h / | grep -v ^Filesystem;
+	echo "== [$(date)] ========== $SECTION =================================";
+    } | SECTION_LOG
     $*
 }
 
@@ -366,8 +370,8 @@ die() { echo "\$0: die - \$*" >&2; exit 1; }
 
 set -x
 
-    mkdir -p /root/github.com
-    git clone https://github.com/mjbright/kubelab /root/github.com/kubelab
+mkdir -p /root/github.com
+git clone https://github.com/mjbright/kubelab /root/github.com/kubelab
 
 # Create modified config.kubelab
 # - needed so kubectl in cluster will use 'default' namespace not 'kubelab':
