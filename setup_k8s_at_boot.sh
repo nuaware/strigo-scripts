@@ -352,10 +352,28 @@ KUBECTL_VERSION() {
     { echo "kubectl version: $(kubectl version --short)" | tr '\n' ' '; echo; } | SECTION_LOG
 }
 
-INSTALL_KUBELAB() {
-    /tmp/kubelab.sh
+CHANGE_KUBELET_LIMITS() {
+    cp -a /var/lib/kubelet/config.yaml /var/lib/kubelet/config.yaml.orig
+    sed -i.bak '/evictionPressureTransitionPeriod:/a evictionHard:\n\ \ imagefs.available: "5%"\n\ \ memory.available: "5%"\n\ \ nodefs.available: "5%"\n\ \ nodefs.inodesFree: "5%"' /var/lib/kubelet/config.yaml
+    diff -C 2 /var/lib/kubelet/config.yaml.orig /var/lib/kubelet/config.yaml
+    systemctl daemon-reload
+    systemctl restart kubelet
+    ps -fade | grep -v grep | grep -v apiserver | grep kubelet || {
+        set -x
+        echo "FAILED to change kubelet limits"
+        cp -a /var/lib/kubelet/config.yaml.orig /var/lib/kubelet/config.yaml
+        systemctl daemon-reload
+        systemctl restart kubelet
+    } | SECTION_LOG
+    ps -fade | grep -v grep | grep -v apiserver | grep kubelet || {
+        echo "FAILED to reset kubelet limits"
+    } | SECTION_LOG
 }
 
+INSTALL_KUBELAB() {
+    CHANGE_KUBELET_LIMITS
+    /tmp/kubelab.sh
+}
 
 CREATE_INSTALL_KUBELAB() {
     cat > /tmp/kubelab.sh << EOF
@@ -565,7 +583,7 @@ FINISH() {
     SHOWCMD kubectl get ns      | SECTION_LOG
     SHOWCMD kubectl describe nodes > /tmp/nodes.describe.txt
 
-    SSH_EACH_NODE 'df -h /' | SECTION_LOG
+    SSH_EACH_NODE 'echo $(hostname; df -h / | grep -v ^Filesystem)' | SECTION_LOG
 
     kubectl get pods -A --no-headers | grep -v Running
     kubectl get pods -A --no-headers | grep Evicted &&
@@ -590,9 +608,12 @@ FINISH() {
 
     scp worker1:/tmp/SECTION.log /tmp/SECTION.log.worker1
 
-    { echo; echo "----"; kubectl get pods -n twistlock; kubectl get pods -n kubelab
+    {
+      echo; echo "----"; kubectl get pods -n twistlock; kubectl get pods -n kubelab
       echo; echo "----"; echo "Connect to Console at [cat /tmp/PCC.console.url]:"; cat /tmp/PCC.console.url
-      wc -l /tmp/SECTION.log*
+      df -h / | grep -v ^Filesystem;
+      SSH_EACH_NODE 'echo $(hostname; df -h / | grep -v ^Filesystem)' | SECTION_LOG
+      wc -l /tmp/SECTION.log*;
     } | SECTION_LOG
 }
 
