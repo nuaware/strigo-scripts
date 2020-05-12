@@ -349,9 +349,6 @@ KUBECTL_VERSION() {
 }
 
 INSTALL_KUBELAB() {
-    mkdir -p /root/github.com
-    git clone https://github.com/mjbright/kubelab /root/github.com/kubelab
-
     /tmp/kubelab.sh
 
     kubectl -n kubelab get pods | SECTION_LOG
@@ -368,6 +365,9 @@ die() { echo "\$0: die - \$*" >&2; exit 1; }
 [ \$(id -un) != 'root' ] && die "Must be run as root"
 
 set -x
+
+    mkdir -p /root/github.com
+    git clone https://github.com/mjbright/kubelab /root/github.com/kubelab
 
 # Create modified config.kubelab
 # - needed so kubectl in cluster will use 'default' namespace not 'kubelab':
