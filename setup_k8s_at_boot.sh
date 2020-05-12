@@ -354,10 +354,6 @@ KUBECTL_VERSION() {
 
 INSTALL_KUBELAB() {
     /tmp/kubelab.sh
-
-    kubectl -n kubelab get pods | SECTION_LOG
-    WAIT_POD_RUNNING -n kubelab
-    kubectl -n kubelab cp /root/.jupyter.profile kubelab:.jupyter.profile
 }
 
 
@@ -393,6 +389,29 @@ kubectl -n kubelab get pods -o wide | grep " Running " || sleep 10
 kubectl -n kubelab get pods -o wide | grep " Running " || sleep 10
 
 kubectl -n kubelab cp /root/.jupyter.profile kubelab:.profile
+
+SECTION_LOG=/tmp/SECTION.log
+
+SECTION_LOG() {
+    if [ -z "$1" ]; then
+        tee -a ${SECTION_LOG}
+    else
+        echo "$*" >> ${SECTION_LOG}
+    fi
+}
+
+kubectl -n kubelab get pods | SECTION_LOG
+
+POD_SPEC="-n kubelab"
+BAD_PODS=$(kubectl get pods $POD_SPEC --no-headers | grep -v Running | wc -l)
+#WAIT_POD_RUNNING -n kubelab
+while [ $BAD_PODS -ne 0 ]; do
+    echo "Waiting for Pods [$POD_SPEC] to be Running" | SECTION_LOG
+    kubectl get pods $POD_SPEC
+    BAD_PODS=$(kubectl get pods $POD_SPEC --no-headers | grep -v Running | wc -l)
+    sleep 5
+done
+kubectl -n kubelab cp /root/.jupyter.profile kubelab:.jupyter.profile
 EOF
 
     chmod +x /tmp/kubelab.sh
