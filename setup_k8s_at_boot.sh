@@ -365,7 +365,7 @@ CREATE_INSTALL_KUBELAB() {
 
 die() { echo "\$0: die - \$*" >&2; exit 1; }
 
-[ `id -un` != 'root' ] && die "Must be run as root"
+[ \$(id -un) != 'root' ] && die "Must be run as root"
 
 set -x
 
