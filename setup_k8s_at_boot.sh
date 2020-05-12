@@ -352,7 +352,20 @@ INSTALL_KUBELAB() {
     mkdir -p /root/github.com
     git clone https://github.com/mjbright/kubelab /root/github.com/kubelab
 
+    /tmp/kubelab.sh
+
+    kubectl -n kubelab get pods | SECTION_LOG
+    WAIT_POD_RUNNING -n kubelab
+    kubectl -n kubelab cp /root/.jupyter.profile kubelab:.jupyter.profile
+}
+
+
+CREATE_INSTALL_KUBELAB() {
     cat > /tmp/kubelab.sh << EOF
+
+die() { echo "\$0: die - \$*" >&2; exit 1; }
+
+[ `id -un` != 'root' ] && die "Must be run as root"
 
 set -x
 
@@ -379,11 +392,6 @@ kubectl -n kubelab cp /root/.jupyter.profile kubelab:.profile
 EOF
 
     chmod +x /tmp/kubelab.sh
-    /tmp/kubelab.sh
-
-    kubectl -n kubelab get pods | SECTION_LOG
-    WAIT_POD_RUNNING -n kubelab
-    kubectl -n kubelab cp /root/.jupyter.profile kubelab:.jupyter.profile
 }
 
 INSTALL_PCC_TWISTLOCK() {
@@ -617,6 +625,7 @@ if [ $NODE_IDX -eq 0 ] ; then
 
     SECTION CONFIG_NODES_ACCESS
     [ $INSTALL_KUBERNETES -ne 0 ]     && SECTION INSTALL_KUBERNETES
+    CREATE_INSTALL_KUBELAB
     [ $INSTALL_KUBELAB -ne 0 ]        && SECTION INSTALL_KUBELAB
     SECTION SETUP_NFS master on $NODE_NAME
     [ $DOWNLOAD_PCC_TWISTLOCK -ne 0 ] && SECTION DOWNLOAD_PCC_TWISTLOCK

@@ -12,14 +12,14 @@ export PRISMA_PCC_ACCESS="__PRISMA_PCC_ACCESS__" PRISMA_PCC_LICENSE="__PRISMA_PC
 cd /root/; git clone $REPO_URL
 cd strigo-scripts; cp -a *.sh *.py /tmp
 
-export INSTALL_KUBELAB=1
+export INSTALL_KUBELAB=0
 export DOWNLOAD_PCC_TWISTLOCK=1
 export INSTALL_PCC_TWISTLOCK=1
 
 # To force a specific version, e.g. "stable-1" or "v1.18.2" set to version here and set UPGRADE_KUBE_LATEST=1
 export K8S_RELEASE="v1.18.2" UPGRADE_KUBE_LATEST=1 K8S_INSTALLER="kubeadm"
 export TWISTLOCK_PCC_RELEASE=20_04_163
-export INSTALL_TERRAFORM=1 INSTALL_HELM=1
+export INSTALL_TERRAFORM=0 INSTALL_HELM=0
 
 export NUM_NODES=2 # Must match !!
 export NODE_NAMES="master worker1"
