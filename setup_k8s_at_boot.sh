@@ -14,10 +14,10 @@ export K8S_RELEASE="v1.18.2"
 export K8S_INSTALLER="kubeadm"
 
 # Terraform
-export INSTALL_TERRAFORM=1
+# export INSTALL_TERRAFORM=1
 
 # Helm
-export INSTALL_HELM=1
+# export INSTALL_HELM=1
 
 KUBERNETES_VERSION="--kubernetes-version $K8S_RELEASE"
 [ $UPGRADE_KUBE_LATEST -eq 1 ] && KUBERNETES_VERSION="--kubernetes-version $(kubeadm version -o short)"
