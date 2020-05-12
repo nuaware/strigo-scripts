@@ -411,7 +411,12 @@ while [ $BAD_PODS -ne 0 ]; do
     BAD_PODS=$(kubectl get pods $POD_SPEC --no-headers | grep -v Running | wc -l)
     sleep 5
 done
+
 kubectl -n kubelab cp /root/.jupyter.profile kubelab:.jupyter.profile
+
+{ kubectl -n kubelab get pods;
+  df -h / | grep -v ^Filesystem; } |
+    SECTION_LOG
 EOF
 
     chmod +x /tmp/kubelab.sh
