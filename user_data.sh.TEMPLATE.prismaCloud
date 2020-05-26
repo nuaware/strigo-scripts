@@ -1,6 +1,7 @@
 #!/bin/bash
 
 DIR=/root/tmp; mkdir -p $DIR
+REPO_URL="https://github.com/${REPO_NAME}"; RAWREPO_URL="https://raw.githubusercontent.com/${REPO_NAME}"
 
 exec > $DIR/user-data.op 2>&1
 env # Before sensitive values !!
@@ -15,37 +16,11 @@ cd /root
 
 die() { echo "$0: die - $*" >&2; exit 1; }
 
-TESTING_INSTALL() {
-    apt-get install -y $KUBE_PKGS vim docker.io
-    modprobe overlay; modprobe br_netfilter
-    echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" |
-        tee /etc/apt/sources.list.d/kubernetes.list
-    wget -O calico.yaml https://docs.projectcalico.org/manifests/calico.yaml
-}
-
-GET_BITS() {
-    wget $LOGIN -O $LFS_TAR_URL $LFS_TAR_PATH
-}
-
-UNINSTALL_BITS() {
-    apt-get remove -y kubeadm kubectl kubelet vim docker.io
-    rm -f /etc/apt/sources.list.d/kubernetes.list
-}
-
-if [ "$1" = "-testing" ];then
-    TESTING_INSTALL
-    GET_BITS
-else
-    UNINSTALL_BITS
-    GET_BITS
-fi
+git clone $REPO_URL $DIR/
 
 BOOT_SETUP_SH=setup_k8s_at_boot.sh
-wget -qO $DIR/$BOOT_SETUP_SH \
-    https://raw.githubusercontent.com/mjbright/strigo-scripts/master/setup_k8s_at_boot.sh
-wget -qO $DIR/get_workspaces_info.py \
-    https://raw.githubusercontent.com/mjbright/strigo-scripts/master/get_workspaces_info.py
 
-chmod +x $DIR/$BOOT_SETUP_SH $DIR/get_workspaces_info.py
+chmod +x $DIR/*.sh $DIR/*.py
 #bash -x $DIR/$BOOT_SETUP_SH
+$DIR/$BOOT_SETUP_SH
 
