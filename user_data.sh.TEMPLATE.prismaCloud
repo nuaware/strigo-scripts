@@ -1,13 +1,9 @@
-#!/bin/bash
-
 DIR=/root/tmp; mkdir -p $DIR
-REPO_URL="https://github.com/${REPO_NAME}"; RAWREPO_URL="https://raw.githubusercontent.com/${REPO_NAME}"
 
 exec > $DIR/user-data.op 2>&1
 env # Before sensitive values !!
 
-# For testing:
-# export PRIVATE_IP=$(ec2metadata --local-ipv4) PUBLIC_IP=$(ec2metadata --public-ipv4)
+# For testing: export PRIVATE_IP=$(ec2metadata --local-ipv4) PUBLIC_IP=$(ec2metadata --public-ipv4)
 
 export CLASSID="__CLASSID__" ORG_ID="__ORG_ID__" API_KEY="__API_KEY__" OWNER_ID_OR_EMAIL="__OWNER_ID_OR_EMAIL__"
 export PRISMA_PCC_ACCESS="__PRISMA_PCC_ACCESS__" REGISTER_URL="__REGISTER_URL__"
@@ -23,4 +19,3 @@ BOOT_SETUP_SH=setup_k8s_at_boot.sh
 chmod +x $DIR/*.sh $DIR/*.py
 #bash -x $DIR/$BOOT_SETUP_SH
 $DIR/$BOOT_SETUP_SH
-
