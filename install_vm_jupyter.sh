@@ -2,7 +2,7 @@
 
 APT_INSTALLS() {
     #sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y tmux curl vim && sudo apt-get clean && sudo apt-get autoclean
-    sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y tmux curl vim python3-pip
+    apt-get update && apt-get upgrade -y && apt-get install -y tmux curl vim python3-pip
 }
 
 PIP_INSTALLS() {
@@ -17,9 +17,12 @@ PIP_INSTALLS() {
 
 ENABLE_JUPYTER_BASH() {
     jupyter nbextensions_configurator enable --system
-    python3 -m bash_kernel.install
+    sudo -u $END_USER python3 -m bash_kernel.install
 }
 
+END_USER=${USERS% *}
+END_USER=${END_USER%:*}
+#echo $END_USER
 
 APT_INSTALLS
 PIP_INSTALLS
