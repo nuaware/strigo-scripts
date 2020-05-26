@@ -29,6 +29,7 @@ CNI_YAMLS="https://docs.projectcalico.org/manifests/calico.yaml"
 POD_CIDR="192.168.0.0/16"
 
 SECTION_LOG=/tmp/SECTION.log
+EVENT_LOG=/root/tmp/event.log
 
 NUM_MASTERS=1
 
