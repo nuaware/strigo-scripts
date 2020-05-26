@@ -1,6 +1,6 @@
 # strigo-scripts
 
-Scripts for setting up nodes on Strigo training delivery platform - as used for 2020-May-12 dry-run
+Scripts for setting up nodes on Strigo training delivery platform
 
 ## Using these scripts
 
