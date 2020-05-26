@@ -6,8 +6,6 @@ export UPGRADE_KUBE_LATEST=0
 export UPGRADE_KUBE_LATEST=1
 [ -z "$INSTALL_KUBERNETES" ] && export INSTALL_KUBERNETES=1
 
-[ "$USER_EMAIL" = "$OWNER_ID_OR_EMAIL" ] && INSTALL_JUPYTER=1
-
 export TWISTLOCK_PCC_RELEASE=20_04_163
 
 # To force a specific version, e.g. "stable-1" or "v1.18.2" set to version here and set UPGRADE_KUBE_LATEST=1
@@ -155,7 +153,8 @@ set_EVENT_WORKSPACE_NODES() {
     $SCRIPT_DIR/get_strigo_info.py -v -ips | tee -a $EVENT_LOG
 
     USER_EMAIL=$($SCRIPT_DIR/get_strigo_info.py -oem | tee -a $EVENT_LOG)
-    echo "USER_EMAIL=<$USER_EMAIL> OWNER_ID_OR_EMAIL=<$OWNER_ID_OR_EMAIL>"
+    [ "$USER_EMAIL" = "$OWNER_ID_OR_EMAIL" ] && INSTALL_JUPYTER=1
+    echo "USER_EMAIL=<$USER_EMAIL> OWNER_ID_OR_EMAIL=<$OWNER_ID_OR_EMAIL> INSTALL_JUPYTER=$INSTALL_JUPYTER"
 }
 
 START_DOCKER_plus() {
