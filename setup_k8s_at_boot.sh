@@ -131,7 +131,6 @@ TIMER_hhmmss() {
 set_EVENT_WORKSPACE_NODES() {
     [ -z "$NUM_NODES" ] && die "Expected number of nodes is not set/exported from invoking user-data script"
 
-    EVENT_INFO=/tmp/event.log
     cp /dev/null $EVENT_LOG
 
     _NUM_NODES=$($SCRIPT_DIR/get_strigo_info.py -nodes | tee -a $EVENT_LOG)
@@ -660,7 +659,6 @@ SECTION_LOG "PUBLIC_IP=$PUBLIC_IP"
 [ -z "$API_KEY"           ] && die "API_KEY is unset"
 [ -z "$ORG_ID"            ] && die "ORG_ID is unset"
 [ -z "$OWNER_ID_OR_EMAIL" ] && die "OWNER_ID_OR_EMAIL is unset"
-[ -z "$USER_EMAIL" ]        && die "USER_EMAIL is unset"
 
 [ -z "$PRIVATE_IP"        ] && die "PRIVATE_IP is unset"
 [ -z "$PUBLIC_IP"         ] && die "PUBLIC_IP is unset"
@@ -677,6 +675,7 @@ SECTION START_DOCKER_plus
 # SECTION GET_LAB_RESOURCES - CAREFUL THIS WILL EXPOSE YOUR API_KEY/ORG_ID
 
 set_EVENT_WORKSPACE_NODES
+[ -z "$USER_EMAIL" ]        && die "USER_EMAIL is unset"
 
 # Perform all kubeadm operations from Master1:
 if [ $NODE_IDX -eq 0 ] ; then
