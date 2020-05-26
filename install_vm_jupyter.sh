@@ -31,6 +31,13 @@ ENABLE_JUPYTER_BASH
 cat > /tmp/jupyter.sh <<EOF
 #!/bin/bash
 
+if [[ "$1" = "-fg" ]]; then
+    shift
+else
+    ( "$0" -fg "$@" </dev/null &>/dev/null & )
+    exit
+fi
+
 exec > /tmp/jupyter.log 2>&1
 echo "Logging jupyter output to /tmp/jupyter.log"
 
@@ -42,8 +49,9 @@ done
 EOF
 
 chmod +x /tmp/jupyter.sh
-echo "Start Jupyter using: /tmp/jupyter.sh"
+echo "Starting Jupyter using: /tmp/jupyter.sh"
 echo "Look for token in:   /tmp/jupyter.log"
+/tmp/jupyter.sh
 
 echo "Setup ssh tunnel to open port $(ec2metadata --public-host):8888 to localhost:8888"
 
