@@ -6,6 +6,8 @@ export UPGRADE_KUBE_LATEST=0
 export UPGRADE_KUBE_LATEST=1
 [ -z "$INSTALL_KUBERNETES" ] && export INSTALL_KUBERNETES=1
 
+[ "$USER_EMAIL" = "$OWNER_ID_OR_EMAIL" ] && INSTALL_JUPYTER=1
+
 export TWISTLOCK_PCC_RELEASE=20_04_163
 
 # To force a specific version, e.g. "stable-1" or "v1.18.2" set to version here and set UPGRADE_KUBE_LATEST=1
@@ -13,16 +15,11 @@ export K8S_RELEASE="v1.18.2"
 
 export K8S_INSTALLER="kubeadm"
 
-# Terraform
-# export INSTALL_TERRAFORM=1
-
-# Helm
-# export INSTALL_HELM=1
-
 KUBERNETES_VERSION="--kubernetes-version $K8S_RELEASE"
 [ $UPGRADE_KUBE_LATEST -eq 1 ] && KUBERNETES_VERSION="--kubernetes-version $(kubeadm version -o short)"
 
-INSTALL_PCC_SH_URL=https://raw.githubusercontent.com/mjbright/strigo-scripts/master/install_pcc.sh
+INSTALL_PCC_SH_URL="${RAWREPO_URL}/master/install_pcc.sh"
+
 #https://cdn.twistlock.com/releases/6e6c2d6a/prisma_cloud_compute_edition_20_04_163.tar.gz
 export PRISMA_PCC_ACCESS
 export PRISMA_PCC_TAR="/tmp/prisma_cloud_compute_edition_${TWISTLOCK_PCC_RELEASE}.tar.gz"
@@ -156,6 +153,9 @@ set_EVENT_WORKSPACE_NODES() {
     [ -z "$WORKSPACE"  ] && die "WORKSPACE is unset"
 
     $SCRIPT_DIR/get_strigo_info.py -v -ips | tee -a $EVENT_LOG
+
+    USER_EMAIL=$($SCRIPT_DIR/get_strigo_info.py -oem | tee -a $EVENT_LOG)
+    echo "USER_EMAIL=<$USER_EMAIL> OWNER_ID_OR_EMAIL=<$OWNER_ID_OR_EMAIL>"
 }
 
 START_DOCKER_plus() {
@@ -368,6 +368,14 @@ CHANGE_KUBELET_LIMITS() {
     ps -fade | grep -v grep | grep -v apiserver | grep kubelet || {
         echo "FAILED to reset kubelet limits"
     } | SECTION_LOG
+}
+
+INSTALL_JUPYTER() {
+    JUPYTER_INSTALL_URL="${RAWREPO_URL}/master/install_vm_jupyter.sh "
+
+    wget -O /tmp/install_vm_jupyter.sh $JUPYTER_INSTALL_URL
+    chmod +x /tmp/install_vm_jupyter.sh
+    /tmp/install_vm_jupyter.sh
 }
 
 INSTALL_KUBELAB() {
@@ -650,10 +658,11 @@ SECTION_LOG "PUBLIC_IP=$PUBLIC_IP"
 
 [ -z "$API_KEY"           ] && die "API_KEY is unset"
 [ -z "$ORG_ID"            ] && die "ORG_ID is unset"
-[ -z "$OWNER_ID_OR_EMAIL" ] && die "OWNER_ID_OR_EMAIL is unset"P
+[ -z "$OWNER_ID_OR_EMAIL" ] && die "OWNER_ID_OR_EMAIL is unset"
+[ -z "$USER_EMAIL" ]        && die "USER_EMAIL is unset"
 
-[ -z "$PRIVATE_IP"        ] && die "PRIVATE_IP is unset"P
-[ -z "$PUBLIC_IP"         ] && die "PUBLIC_IP is unset"P
+[ -z "$PRIVATE_IP"        ] && die "PRIVATE_IP is unset"
+[ -z "$PUBLIC_IP"         ] && die "PUBLIC_IP is unset"
 
 echo "Checking for Events owned by '$OWNER_ID_OR_EMAIL'"
 
@@ -679,6 +688,7 @@ if [ $NODE_IDX -eq 0 ] ; then
     [ $INSTALL_KUBERNETES -ne 0 ]     && SECTION INSTALL_KUBERNETES
     CREATE_INSTALL_KUBELAB
     [ $INSTALL_KUBELAB -ne 0 ]        && SECTION INSTALL_KUBELAB
+    [ $INSTALL_JUPYTER -ne 0 ]        && SECTION INSTALL_JUPYTER
     SECTION SETUP_NFS master on $NODE_NAME
     [ $DOWNLOAD_PCC_TWISTLOCK -ne 0 ] && SECTION DOWNLOAD_PCC_TWISTLOCK
     [ $INSTALL_PCC_TWISTLOCK -ne 0 ]  && SECTION INSTALL_PCC_TWISTLOCK
