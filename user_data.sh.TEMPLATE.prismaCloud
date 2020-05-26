@@ -8,14 +8,14 @@ env # Before sensitive values !!
 export CLASSID="__CLASSID__" ORG_ID="__ORG_ID__" API_KEY="__API_KEY__" OWNER_ID_OR_EMAIL="__OWNER_ID_OR_EMAIL__"
 export PRISMA_PCC_ACCESS="__PRISMA_PCC_ACCESS__" REGISTER_URL="__REGISTER_URL__"
 
-cd /root
+cd $DIR
 
 die() { echo "$0: die - $*" >&2; exit 1; }
 
-git clone $REPO_URL $DIR/
+git clone $REPO_URL strigo-scripts
 
-BOOT_SETUP_SH=setup_k8s_at_boot.sh
+BOOT_SETUP_SH=$DIR/strigo-scripts/setup_k8s_at_boot.sh
 
-chmod +x $DIR/*.sh $DIR/*.py
-#bash -x $DIR/$BOOT_SETUP_SH
-$DIR/$BOOT_SETUP_SH
+chmod +x $DIR/strigo-scripts/*.sh $DIR/strigo-scripts/*.py
+#bash -x $BOOT_SETUP_SH
+$BOOT_SETUP_SH
