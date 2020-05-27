@@ -2,24 +2,27 @@
 
 APT_INSTALLS() {
     #sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y tmux curl vim && sudo apt-get clean && sudo apt-get autoclean
-    apt-get update && apt-get upgrade -y && apt-get install -y tmux curl vim python3-pip
+    sudo apt-get update
+    sudo apt-get upgrade -y
+    sudo apt-get install -y tmux curl vim python3-pip
 }
 
 PIP_INSTALLS() {
-    python3 -m pip install --upgrade pip && \
-    python3 -m pip install setuptools && \
-    python3 -m pip install pick ppretty && \
-    python3 -m pip install RISE && \
-    python3 -m pip install kubernetes && \
-    python3 -m pip install jupyter_nbextensions_configurator && \
-    python3 -m pip install --no-cache-dir bash_kernel
+    sudo python3 -m pip install --upgrade pip
+    sudo python3 -m pip install setuptools
+    sudo python3 -m pip install pick ppretty
+    sudo python3 -m pip install RISE
+    sudo python3 -m pip install kubernetes
+    sudo python3 -m pip install jupyter_nbextensions_configurator
+    sudo python3 -m pip install --no-cache-dir bash_kernel
 }
 
 ENABLE_JUPYTER_BASH() {
-    echo; echo "---- jupyter nbextensions_configurator enable --system"
-    jupyter nbextensions_configurator enable --system
-    echo; echo "---- sudo -u $END_USER HOME=/home/$END_USER python3 -m bash_kernel.install"
-    sudo -u $END_USER HOME=/home/$END_USER python3 -m bash_kernel.install
+    CMD="sudo jupyter nbextensions_configurator enable --system"
+    echo; echo "---- $CMD"; $CMD
+
+    CMD="sudo -u $END_USER HOME=/home/$END_USER python3 -m bash_kernel.install"
+    echo; echo "---- $CMD"; $CMD
     echo
 }
 
@@ -51,10 +54,12 @@ done
 
 EOF
 
-chmod +x /tmp/jupyter.sh
+chmod a+x /tmp/jupyter.sh
 echo "Starting Jupyter using: /tmp/jupyter.sh"
 echo "Look for token in:   /tmp/jupyter.log"
-/tmp/jupyter.sh
+
+CMD="sudo -u $END_USER HOME=/home/$END_USER /tmp/jupyter.sh"
+echo; echo "---- $CMD"; $CMD
 
 echo "Setup ssh tunnel to open port $(ec2metadata --public-host):8888 to localhost:8888"
 
