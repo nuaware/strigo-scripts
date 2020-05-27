@@ -6,18 +6,21 @@ APT_INSTALLS() {
 }
 
 PIP_INSTALLS() {
-    pip3 install --upgrade pip && \
-    pip3 install setuptools && \
-    pip3 install pick ppretty && \
-    pip3 install RISE && \
-    pip3 install kubernetes && \
-    pip3 install jupyter_nbextensions_configurator && \
-    pip3 install --no-cache-dir bash_kernel
+    python3 -m pip install --upgrade pip && \
+    python3 -m pip install setuptools && \
+    python3 -m pip install pick ppretty && \
+    python3 -m pip install RISE && \
+    python3 -m pip install kubernetes && \
+    python3 -m pip install jupyter_nbextensions_configurator && \
+    python3 -m pip install --no-cache-dir bash_kernel
 }
 
 ENABLE_JUPYTER_BASH() {
+    echo; echo "---- jupyter nbextensions_configurator enable --system"
     jupyter nbextensions_configurator enable --system
-    sudo -u $END_USER python3 -m bash_kernel.install
+    echo; echo "---- sudo -u $END_USER HOME=/home/$END_USER python3 -m bash_kernel.install"
+    sudo -u $END_USER HOME=/home/$END_USER python3 -m bash_kernel.install
+    echo
 }
 
 END_USER=${USERS% *}
