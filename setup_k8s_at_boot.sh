@@ -605,7 +605,7 @@ FINISH() {
     MAX_LOOPS=10; LOOP=0;
     while [ $BAD_PODS -ne 0 ]; do
 	echo "Waiting for remaining Pods to be running" | SECTION_LOG
-        let LOOP=LOOP+1; sleep 12; [ $LOOP -ge $MAX_LOOP ] && die "Failed waiting for remaining Pods"
+        let LOOP=LOOP+1; sleep 12; [ $LOOP -ge $MAX_LOOPS ] && die "Failed waiting for remaining Pods"
 
         #kubectl get pods -A -o json | jq '.items[] | select(.status.reason!=null)'
         #BAD_PODS=$(kubectl get pods -A -o json | jq '.items[] | select(.status.reason!=null)' | wc -l)
