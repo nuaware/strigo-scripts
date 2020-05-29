@@ -37,10 +37,10 @@ ENABLE_JUPYTER_BASH
 cat > /tmp/jupyter.sh <<EOF
 #!/bin/bash
 
-if [[ "$1" = "-fg" ]]; then
+if [[ "\$1" = "-fg" ]]; then
     shift
 else
-    ( "$0" -fg "$@" </dev/null &>/dev/null & )
+    ( \$0 -fg "\$@" </dev/null &>/dev/null & )
     exit
 fi
 
