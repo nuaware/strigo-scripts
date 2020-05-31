@@ -1,5 +1,7 @@
 #!/bin/bash
 
+CUSTOM_CSS_URL=https://raw.githubusercontent.com/mjbright/kubelab/master/custom.css
+
 APT_INSTALLS() {
     #sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y tmux curl vim && sudo apt-get clean && sudo apt-get autoclean
     sudo apt-get update
@@ -26,6 +28,13 @@ ENABLE_JUPYTER_BASH() {
     echo
 }
 
+INSTALL_CUSTOM_CSS() {
+    CUSTOM_CSS=/home/$END_USER/.jupyter/custom
+
+    wget -O $CUSTOM_CSS $CUSTOM_CSS_URL
+    ls -al $CUSTOM_CSS
+}
+
 END_USER=${USERS% *}
 END_USER=${END_USER%:*}
 #echo $END_USER
@@ -33,6 +42,7 @@ END_USER=${END_USER%:*}
 APT_INSTALLS
 PIP_INSTALLS
 ENABLE_JUPYTER_BASH
+INSTALL_CUSTOM_CSS
 
 cat > /tmp/jupyter.sh <<EOF
 #!/bin/bash
