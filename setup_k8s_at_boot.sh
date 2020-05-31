@@ -42,8 +42,11 @@ export NODE_NAME="unset"
 #BIN=/root/bin
 BIN=/usr/local/bin
 
-[ $INSTALL_PCC_TWISTLOCK -eq 0 ] &&
+#[ $INSTALL_PCC_TWISTLOCK -ne 0 ] && {}
+[ $DOWNLOAD_PCC_TWISTLOCK -ne 0 ] && {
     [ ! -z "$PRISMA_PCC_ACCESS" ] && echo "export PRISMA_PCC_ACCESS=$PRISMA_PCC_ACCESS" >> /root/.profile
+    [ ! -z "$PRISMA_PCC_LICENSE" ] && echo "$PRISMA_PCC_LICENSE" > /tmp/PCC.license.txt
+}
 
 cat >> /root/.profile <<EOF
 export HOME=/root
