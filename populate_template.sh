@@ -22,7 +22,7 @@ TEMPFILE=$(tempfile).vars
 
 ## -- main: -----------------------------------------------------
 
-VARS="CLASSID ORG_ID API_KEY OWNER_ID_OR_EMAIL PRISMA_PCC_ACCESS REGISTER_URL"
+VARS="CLASSID ORG_ID API_KEY OWNER_ID_OR_EMAIL PRISMA_PCC_ACCESS PRISMA_PCC_LICENSE REGISTER_URL"
 
 CMD="sed"
 for VAR in $VARS; do
