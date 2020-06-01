@@ -37,6 +37,8 @@ INSTALL_CUSTOM_CSS() {
 
 END_USER=${USERS% *}
 END_USER=${END_USER%:*}
+[ -z "$END_USER" ] && END_USER=ubuntu
+
 #echo $END_USER
 
 APT_INSTALLS
@@ -56,6 +58,9 @@ fi
 
 exec > /tmp/jupyter.log 2>&1
 echo "Logging jupyter output to /tmp/jupyter.log"
+
+export HOME=/home/$END_USER
+cd
 
 while true; do
     #jupyter notebook --port 8888 --ip=0.0.0.0 --allow-root --no-browser
