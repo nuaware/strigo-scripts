@@ -43,6 +43,10 @@ set -x
     #export TW_CONS_OPTS="--registry-token $PRISMA_PCC_ACCESS"
 
     ./linux/twistcli console export kubernetes --registry-token "$PRISMA_PCC_ACCESS" --service-type NodePort
+
+    # LATER: mv
+    cp -a ./linux/twistcli /usr/local/bin/
+
     #./linux/twistcli console export kubernetes $TW_CONS_OPTS --service-type NodePort
 #set +x
 
