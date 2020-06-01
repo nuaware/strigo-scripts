@@ -129,6 +129,14 @@ TIMER_hhmmss() {
 
 # END: TIMER FUNCTIONS ================================================
 
+CREATE_USEFUL_SCRIPTS() {
+    echo 'kubectl -n frontend set image deploy/nginx nginx=nginx:1.12' > /tmp/reset_nginx_1.12.sh
+    chmod +x /tmp/reset_nginx_1.12.sh
+
+    echo 'kubectl -n frontend set image deploy/nginx nginx=nginx:1.18' > /tmp/reset_nginx_1.18.sh
+    chmod +x /tmp/reset_nginx_1.18.sh
+}
+
 set_EVENT_WORKSPACE_NODES() {
     [ -z "$NUM_NODES" ] && die "Expected number of nodes is not set/exported from invoking user-data script"
 
@@ -672,6 +680,8 @@ echo "Checking for Events owned by '$OWNER_ID_OR_EMAIL'"
 APT_INSTALL_PACKAGES="jq zip"
 
 [ $UPGRADE_KUBE_LATEST -eq 1 ] && APT_INSTALL_PACKAGES+=" kubeadm kubelet kubectl"
+
+CREATE_USEFUL_SCRIPTS
 
 SECTION START_DOCKER_plus
 # SECTION GET_LAB_RESOURCES - CAREFUL THIS WILL EXPOSE YOUR API_KEY/ORG_ID
