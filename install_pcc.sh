@@ -34,7 +34,7 @@ UNPACK_TAR() {
 CREATE_CONSOLE() {
     echo; echo "---- Creating Prisma Console"
 
-    . /root/.profile
+    . /root/.profile 2>/dev/null # Ignore "mesg: ttyname failed: Inappropriate ioctl for device" caused by "mesg n"
 set -x
     #./linux/twistcli console export kubernetes --service-type LoadBalancer
     #env | grep PRISMA_PCC_ACCESS
