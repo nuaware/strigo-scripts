@@ -9,13 +9,15 @@ die() {
 
 ## -- arguments: ------------------------------------------------
 
-[ -z "$1"   ] && die "Usage: $0 <rcfile>"
-[ ! -f "$1" ] && die "Usage: No such rcfile as <$1>"
+RCFILE=$1
+
+[ -z "$RCFILE"   ] && die "Usage: $0 <rcfile>"
+[ ! -f "$RCFILE" ] && die "Usage: No such rcfile as <$RCFILE>"
 
 TEMPFILE=$(tempfile).vars
 [ -f $TEMPFILE ] && rm -f $TEMPFILE
 
-. $1
+. $RCFILE
 
 [ -z "$IP_TEMPLATE" ] && die "Input IP_TEMPLATE file unset"
 [ -z "$OP_PRIVATE" ]  && die "Output OP_PRIVATE file unset"
