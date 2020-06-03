@@ -317,7 +317,7 @@ KUBEADM_JOIN() {
     MAX_LOOPS=10; LOOP=0;
     while ! kubectl get nodes | grep $WORKER_NODE_NAME; do
 	echo "Waiting for worker nodes to join ..."
-        let LOOP=LOOP+1; sleep 2; [ $LOOP -ge $MAX_LOOP ] && die "Failed to join $WORKER_NODE_NAME"
+        let LOOP=LOOP+1; sleep 2; [ $LOOP -ge $MAX_LOOPS ] && die "Failed to join $WORKER_NODE_NAME"
     done
 }
 
@@ -463,7 +463,7 @@ INSTALL_PCC_TWISTLOCK() {
     MAX_LOOPS=10; LOOP=0;
     while !  ls -altrh /var/nfs/general/MOUNTED_from_NODE_worker* ; do
 	echo "Waiting for worker nodes to mount NFS share ..."
-        let LOOP=LOOP+1; sleep 12; [ $LOOP -ge $MAX_LOOP ] && die "Failed waiting for $WORKER_NODE_NAME to mount NFS share"
+        let LOOP=LOOP+1; sleep 12; [ $LOOP -ge $MAX_LOOPS ] && die "Failed waiting for $WORKER_NODE_NAME to mount NFS share"
     done
     ls -altr /var/nfs/general/MOUNTED_from_NODE_worker* | SECTION_LOG
 
@@ -577,7 +577,7 @@ SETUP_NFS() {
             MAX_LOOPS=10; LOOP=0;
 	    while [ ! -f /nfs/general/MOUNTED_from_NODE_master.txt ] ; do
 	        echo "Waiting for master node to initialize NFS share ..."
-                let LOOP=LOOP+1; sleep 12; [ $LOOP -ge $MAX_LOOP ] && die "Failed waiting to mount share"
+                let LOOP=LOOP+1; sleep 12; [ $LOOP -ge $MAX_LOOPS ] && die "Failed waiting to mount share"
 	        mount master:/var/nfs/general /nfs/general
             done
 
