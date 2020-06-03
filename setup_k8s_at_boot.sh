@@ -351,7 +351,7 @@ SETUP_KUBECONFIG() {
 
     echo "ubuntu: kubectl get nodes:"
     #sudo -u ubuntu KUBECONFIG=/home/ubuntu/.kube/config kubectl get nodes
-    sudo -u ubuntu kubectl get nodes
+    sudo -u ubuntu HOME=/home/ubuntu kubectl get nodes
 
     ls -altr /root/.kube/config /home/ubuntu/.kube/config | SECTION_LOG
 }
