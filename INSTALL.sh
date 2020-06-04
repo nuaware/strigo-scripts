@@ -2,6 +2,8 @@
 
 SCRIPT_DIR=$(dirname $0)
 
+sudo mv $(readlink -f /var/lib/cloud/instance) /root/tmp/instance/
+
 CNI_YAMLS="https://docs.projectcalico.org/manifests/calico.yaml"
 POD_CIDR="192.168.0.0/16"
 
@@ -21,15 +23,12 @@ BIN=/usr/local/bin
 
 # Profile for Kubernetes+PrismaCloud Workshops:
 INSTALL_FN_K8S_PrismaCloud() {
-    export NUM_MASTERS=1
     export INSTALL_KUBELAB=0
 
     export INSTALL_JUPYTER=0
     # To force a specific version, e.g. "stable-1" or "v1.18.2" set to version here and set UPGRADE_KUBE_LATEST=1
     export K8S_RELEASE="v1.18.2" UPGRADE_KUBE_LATEST=1 K8S_INSTALLER="kubeadm"
     export INSTALL_TERRAFORM=0 INSTALL_HELM=0
-    export NUM_NODES=2 # Must match !!
-    export NODE_NAMES="master worker1"
     export USERS="ubuntu:sudo"
     export ANSIBLE_INSTALL=1
 
