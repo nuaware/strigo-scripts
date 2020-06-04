@@ -84,7 +84,7 @@ EOF
 SETUP_INSTALL_PROFILE() {
     case $INSTALL_PROFILE in
         INSTALL_FN_K8S_PrismaCloud)
-            echo "INSTALL_PROFILE: invoking $INSTALL_PROFILE";;
+            echo "INSTALL_PROFILE: invoking $INSTALL_PROFILE"
             $INSTALL_PROFILE;;
         *)
             echo "INSTALL_PROFILE: Bad $INSTALL_PROFILE ... skipping";;
