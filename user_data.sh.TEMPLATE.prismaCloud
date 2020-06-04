@@ -1,21 +1,15 @@
-DIR=/root/tmp; mkdir -p $DIR
-
-exec > $DIR/user-data.op 2>&1
-env # Before sensitive values !!
-
-# For testing: export PRIVATE_IP=$(ec2metadata --local-ipv4) PUBLIC_IP=$(ec2metadata --public-ipv4)
-
-export CLASSID="__CLASSID__" ORG_ID="__ORG_ID__" API_KEY="__API_KEY__" OWNER_ID_OR_EMAIL="__OWNER_ID_OR_EMAIL__"
-export PRISMA_PCC_ACCESS="__PRISMA_PCC_ACCESS__" PRISMA_PCC_LICENSE="__PRISMA_PCC_LICENSE__" REGISTER_URL="__REGISTER_URL__"
-
-cd $DIR
-
 die() { echo "$0: die - $*" >&2; exit 1; }
 
-git clone $REPO_URL strigo-scripts
+DIR=/root/tmp; mkdir -p $DIR; cd $DIR
 
-BOOT_SETUP_SH=$DIR/strigo-scripts/setup_k8s_at_boot.sh
+__VARSFILE_RC__
 
+exec > $DIR/user-data.op 2>&1
+env
+
+# For testing: export PRIVATE_IP=$(ec2metadata --local-ipv4) PUBLIC_IP=$(ec2metadata --public-ipv4)
+git clone $REPO_URL strigo-scripts; BOOT_SETUP_SH=$DIR/strigo-scripts/setup_k8s_at_boot.sh
 chmod +x $DIR/strigo-scripts/*.sh $DIR/strigo-scripts/*.py
+
 #bash -x $BOOT_SETUP_SH
 $BOOT_SETUP_SH
