@@ -2,6 +2,8 @@
 
 SCRIPT_DIR=$(dirname $0)
 
+export ANSIBLE_INSTALL=1
+
 export UPGRADE_KUBE_LATEST=0
 export UPGRADE_KUBE_LATEST=1
 [ -z "$INSTALL_KUBERNETES" ] && export INSTALL_KUBERNETES=1
@@ -678,6 +680,8 @@ echo "Checking for Events owned by '$OWNER_ID_OR_EMAIL'"
 [ ! -z "$REGISTER_URL"    ] && SECTION REGISTER_INSTALL_START
 
 APT_INSTALL_PACKAGES="jq zip"
+
+[ $ANSIBLE_INSTALL -eq 1 ] && APT_INSTALL_PACKAGES+=" ansible ansible-lint ansible-tower-cli ansible-tower-cli-doc"
 
 [ $UPGRADE_KUBE_LATEST -eq 1 ] && APT_INSTALL_PACKAGES+=" kubeadm kubelet kubectl"
 
