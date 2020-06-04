@@ -127,6 +127,16 @@ def getEvent( eventId ):
             return ev
     return None
 
+def getWorkspaces(eventId):
+    if not eventId:
+        #eventId = getMyEventField( OWNER_ID_OR_EMAIL )
+        eventId = getCurrentEventField( 'id' )
+    if VERBOSE: print(f"eventId={eventId}")
+    workspaces = getEventWorkspaces( eventId )
+    if VERBOSE: print(f"workspaces={workspaces}")
+
+    return (eventId, workspaces)
+
 def getEventWorkspaces( eventId ):
     url = f"https://app.strigo.io/api/v1/events/{eventId}/workspaces" 
     res = requests.get(url, headers=headers)
@@ -204,6 +214,20 @@ def getAllCurrentEventsField( field='*', multiple=True ):
 def getCurrentEventField( field='id', multiple=False ):
     if VERBOSE: print(f"getMyEventField( {OWNER_ID_OR_EMAIL}, {field}, {multiple} )")
     return getMyEventField( OWNER_ID_OR_EMAIL, field=field, status='live', multiple=multiple )
+
+def showWorkspaceDetail(ws_data):
+    workspaceId=ws_data['id']
+    print(f"workspaceId={workspaceId} event_id={ws_data['event_id']} owner_email={ws_data['owner']['email']} created_at={ws_data['created_at']}")
+    url = f"https://app.strigo.io/api/v1/events/{eventId}/workspaces/{workspaceId}/resources"
+    workspace = requests.get(url, headers=headers).json()
+    for lab_inst in workspace['data']:
+        lab_instance_id=lab_inst['id']
+        private_ip=lab_inst['private_ip']
+        public_ip=lab_inst['public_ip']
+        #print(f"workspaceId={id} event_id={w['event_id']} owner_email={w['owner']['email']} created_at={w['created_at']}")
+        #if VERBOSE: print(f"lab_id={lab_instance_id} private_ip=${private_ip} public_ip={public_ip}")
+        print(f"  lab_id={lab_instance_id} private_ip=${private_ip} public_ip={public_ip}")
+
 
 eventId=None
 
@@ -285,18 +309,10 @@ while len(sys.argv) > 0:
         print(workspaceId)
 
     if arg == '-W': # Return workspace_id's of all workspaces of current event
-        if not eventId:
-            eventId = getMyEventField( OWNER_ID_OR_EMAIL )
-        if VERBOSE: print(f"eventId={eventId}")
-        #eventId = getCurrentEventField( 'id' )
-        #eventId = getMyEventField( OWNER_ID_OR_EMAIL )
-        if VERBOSE: print(f"eventId={eventId}")
-        workspaces = getEventWorkspaces( eventId )
-        if VERBOSE: print(f"workspaces={workspaces}")
+        (eventId, workspaces) = getWorkspaces(eventId)
+
         for w in workspaces['data']:
             id=w['id']
-            #print(f"workspaceId={id} {w}")
-            #workspaceId=kmx4yZhao6ni4ScAj {'id': 'kmx4yZhao6ni4ScAj', 'event_id': '8hJkTFjC87yR9Dn9f', 'created_at': '2020-06-04T03:58:02.391Z', 'type': 'host', 'owner': {'id': 'hX8PLJfBX4ojEKZxu', 'email': 'michael.bright@nuaware.com'}, 'online_status': 'deprecated', 'last_seen': '2020-06-04T05:21:08.201Z', 'need_assistance': False}
             print(f"workspaceId={id} event_id={w['event_id']} owner_email={w['owner']['email']} created_at={w['created_at']}")
 
     if arg == '-WE': # Return workspace_id's of all workspaces of all events
@@ -342,26 +358,18 @@ while len(sys.argv) > 0:
         print( workspacePrivateIps, workspacePublicIps )
         sys.exit(0)
 
-    if arg == '-IPS': # Return ips of VMs of all workspaces of current event
-        if not eventId:
-            #eventId = getMyEventField( OWNER_ID_OR_EMAIL )
-            eventId = getCurrentEventField( 'id' )
-        if VERBOSE: print(f"eventId={eventId}")
-        workspaces = getEventWorkspaces( eventId )
-        if VERBOSE: print(f"workspaces={workspaces}")
-
+    if arg == '-owner-w': # Select workspace of Event owner
+        (eventId, workspaces) = getWorkspaces(eventId)
         for ws_data in workspaces['data']:
             workspaceId=ws_data['id']
-            print(f"workspaceId={workspaceId} event_id={ws_data['event_id']} owner_email={ws_data['owner']['email']} created_at={ws_data['created_at']}")
-            url = f"https://app.strigo.io/api/v1/events/{eventId}/workspaces/{workspaceId}/resources"
-            workspace = requests.get(url, headers=headers).json()
-            for lab_inst in workspace['data']:
-                lab_instance_id=lab_inst['id']
-                private_ip=lab_inst['private_ip']
-                public_ip=lab_inst['public_ip']
-                #print(f"workspaceId={id} event_id={w['event_id']} owner_email={w['owner']['email']} created_at={w['created_at']}")
-                #if VERBOSE: print(f"lab_id={lab_instance_id} private_ip=${private_ip} public_ip={public_ip}")
-                print(f"  lab_id={lab_instance_id} private_ip=${private_ip} public_ip={public_ip}")
+            if ws_data['owner']['email'] == OWNER_ID_OR_EMAIL:
+                showWorkspaceDetail(ws_data)
+
+    if arg == '-IPS': # Return ips of VMs of all workspaces of current event
+        (eventId, workspaces) = getWorkspaces(eventId)
+
+        for ws_data in workspaces['data']:
+            showWorkspaceDetail(ws_data)
 
         sys.exit(0)
 
