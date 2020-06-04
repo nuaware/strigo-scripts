@@ -36,6 +36,11 @@ shift
 export PRIVATE_IP="unset"
 export PUBLIC_IP="unset"
 
+# If running in an ec2 VM:
+while ec2metadata 2>/dev/null && {
+	export PRIVATE_IP=$(ec2metadata --local-ipv4) PUBLIC_IP=$(ec2metadata --public-ipv4)
+}
+
 if [ "$1" = "--private-ip" ]; then
     shift; export PRIVATE_IP="$1"; shift
 fi
