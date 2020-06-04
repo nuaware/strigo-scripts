@@ -21,44 +21,7 @@ export NODE_NAME="unset"
 #BIN=/root/bin
 BIN=/usr/local/bin
 
-# Profile for Kubernetes+PrismaCloud Workshops:
-INSTALL_FN_K8S_PrismaCloud() {
-    export INSTALL_KUBELAB=0
-
-    export INSTALL_JUPYTER=0
-    # To force a specific version, e.g. "stable-1" or "v1.18.2" set to version here and set UPGRADE_KUBE_LATEST=1
-    export K8S_RELEASE="v1.18.2" UPGRADE_KUBE_LATEST=1 K8S_INSTALLER="kubeadm"
-    export INSTALL_TERRAFORM=0 INSTALL_HELM=0
-    export USERS="ubuntu:sudo"
-    export ANSIBLE_INSTALL=1
-
-    # Prisma Cloud specific:
-    export DOWNLOAD_PCC_TWISTLOCK=0 INSTALL_PCC_TWISTLOCK=0
-    export TWISTLOCK_PCC_RELEASE=20_04_163
-    INSTALL_PCC_SH_URL="${RAWREPO_URL}/master/install_pcc.sh"
-    #https://cdn.twistlock.com/releases/6e6c2d6a/prisma_cloud_compute_edition_20_04_163.tar.gz
-    export PRISMA_PCC_TAR="/tmp/prisma_cloud_compute_edition_${TWISTLOCK_PCC_RELEASE}.tar.gz"
-    export PRISMA_PCC_URL="https://cdn.twistlock.com/releases/6e6c2d6a/prisma_cloud_compute_edition_${TWISTLOCK_PCC_RELEASE}.tar.gz"
-
-    [ "$USER_EMAIL" = "$OWNER_ID_OR_EMAIL" ] && {
-        export INSTALL_JUPYTER=1
-        export DOWNLOAD_PCC_TWISTLOCK=1 INSTALL_PCC_TWISTLOCK=1
-    }
-    echo "USER_EMAIL=<$USER_EMAIL> OWNER_ID_OR_EMAIL=<$OWNER_ID_OR_EMAIL> INSTALL_JUPYTER=$INSTALL_JUPYTER DOWNLOAD_PCC_TWISTLOCK=$DOWNLOAD_PCC_TWISTLOCK INSTALL_PCC_TWISTLOCK=$INSTALL_PCC_TWISTLOCK"
-
-    ## - CREATE_USEFUL_SCRIPTS:
-    echo 'kubectl -n frontend set image deploy/nginx nginx=nginx:1.12' > /tmp/reset_nginx_1.12.sh
-    chmod +x /tmp/reset_nginx_1.12.sh
-
-    echo 'kubectl -n frontend set image deploy/nginx nginx=nginx:1.18' > /tmp/reset_nginx_1.18.sh
-    chmod +x /tmp/reset_nginx_1.18.sh
-
-    #[ $INSTALL_PCC_TWISTLOCK -ne 0 ] && {}
-    [ $DOWNLOAD_PCC_TWISTLOCK -ne 0 ] && {
-        [ ! -z "$PRISMA_PCC_ACCESS" ] && echo "export PRISMA_PCC_ACCESS=$PRISMA_PCC_ACCESS" >> /root/.profile
-        [ ! -z "$PRISMA_PCC_LICENSE" ] && echo "$PRISMA_PCC_LICENSE" > /tmp/PCC.license.txt
-    }
-}
+. $SCRIPT_DIR/INSTALL_PROFILES.fn.rc
 
 INIT_PROFILE_HISTORY() {
     cat >> /root/.profile <<EOF
@@ -82,7 +45,7 @@ EOF
 
 SETUP_INSTALL_PROFILE() {
     case $INSTALL_PROFILE in
-        INSTALL_FN_K8S_PrismaCloud)
+        INSTALL_FN_*)
             echo "INSTALL_PROFILE: invoking $INSTALL_PROFILE"
             $INSTALL_PROFILE;;
         *)
