@@ -4,6 +4,8 @@ import os, sys
 import requests, json
 import urllib.request
 
+from datetime import datetime
+
 def die(msg):
     print("die: " + msg)
     sys.exit(1)
@@ -221,6 +223,26 @@ while len(sys.argv) > 0:
         eventId=arg
         if VERBOSE: print(f"Setting eventId={eventId}")
 
+    if arg == '-set-le': # Set eventId to latest event
+        eventIds=getAllCurrentEventsField( field='id', multiple=True )
+        latest_secs=0
+        latest_eventId=None
+
+        for eventId in eventIds:
+            event=getEvent( eventId )
+            date_start=event['date_start'] # "date_start": "2020-04-02T18:30:00.000Z"
+            timediff= datetime.strptime(date_start, '%Y-%m-%dT%H:%M:%S.%fZ') - datetime(1970,1,1)
+            date_start_secs = timediff.total_seconds()
+            if VERBOSE: print(f"eventId={eventId} date_start={date_start} date_start_secs={date_start_secs}")
+
+            if date_start_secs > latest_secs:
+                latest_eventId=eventId
+                latest_secs=date_start_secs
+
+        eventId=latest_eventId
+        event=getEvent( eventId )
+        if VERBOSE: print(f"eventId={eventId} status={event['status']} name={event['name']} owner_email={event['owner']['email']} date_start={event['date_start']} date_end={event['date_end']}")
+
     if arg == '-e': # Return event_id of current event
         eventId=getCurrentEventField()
         if VERBOSE:
@@ -234,7 +256,7 @@ while len(sys.argv) > 0:
             print(f"eventIds={eventIds}")
         for eventId in eventIds:
             event=getEvent( eventId )
-            print(f"eventId={eventId} status={event['status']} name={event['name']} owner_email={event['owner']['email']}")
+            print(f"eventId={eventId} status={event['status']} name={event['name']} owner_email={event['owner']['email']} date_start={event['date_start']} date_end={event['date_end']}")
 
     if arg == '-c': # Return class_id of current event
         # if eventId is set use this, else get from current event
