@@ -322,6 +322,15 @@ CNI_INSTALL() {
 
     echo "NEED TO WAIT - HOW TO HANDLE failure ... need to restart coredns, other?"
     kubectl get nodes | SECTION_LOG
+
+    WAIT_NS_PODS kube-system
+    if [ $BAD_PODS -ne 0 ]; then
+	for BAD_POD_NAME in $BAD_PODS_NAME; do
+	    echo "bad pod: kubectl delete pod -n kube-system $BAD_POD_NAME"
+	    kubectl delete pod -n kube-system $BAD_POD_NAME
+	done
+    fi
+    WAIT_NS_PODS kube-system
 }
 
 SETUP_KUBECONFIG() {
@@ -600,6 +609,27 @@ SHOWCMD() {
     $CMD
     RET=$?
     [ $RET -ne 0 ] && echo "--> returned $RET"
+}
+
+WAIT_NS_PODS() {
+    NS=$1; shift
+
+    BAD_PODS=$(kubectl get pods -n $NS --no-headers | grep -v Running | wc -l)
+    MAX_LOOPS=20; LOOP=0;
+    while [ $BAD_PODS -ne 0 ]; do
+        echo "Waiting for remaining (ns:$NS) Pods to be running" | SECTION_LOG
+        let LOOP=LOOP+1; sleep 12; [ $LOOP -ge $MAX_LOOPS ] && die "Failed waiting for remaining Pods"
+
+        kubectl get pods -n $NS --no-headers | grep -v Running | SECTION_LOG
+        BAD_PODS=$(kubectl get pods -n $NS --no-headers | grep -v Running | wc -l)
+
+	# Show status of none-Running Pods:
+	BAD_PODS_NAME=$(kubectl get pods -n $NS --no-headers | grep -v Running | awk '{ print $1; }')
+	for BAD_POD_NAME in $BAD_PODS_NAME; do
+            kubectl describe pod -n $BAD_POD_NAME | grep -A 10 Events:
+	done
+    done
+    BAD_PODS=$(kubectl get pods -n $NS --no-headers | grep -v Running | wc -l)
 }
 
 FINISH() {
