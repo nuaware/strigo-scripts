@@ -712,7 +712,8 @@ else
     APT_INSTALL_PACKAGES+=" nfs-common"
 
     #apt-get update && apt-get install -y $APT_INSTALL_PACKAGES
-    apt-get update  && apt-get upgrade -y $APT_INSTALL_PACKAGES
+    #apt-get update  && apt-get upgrade -y $APT_INSTALL_PACKAGES
+    apt-get update  && apt-get upgrade && apt-get install -y $APT_INSTALL_PACKAGES
 
     while [ ! -f /tmp/NODE_NAME ]; do sleep 5; done
     #NODE_NAME=$(cat /tmp/NODE_NAME)
