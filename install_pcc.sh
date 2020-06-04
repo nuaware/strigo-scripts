@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 PUBLIC_HOST=$(ec2metadata --public-host)
 ADMIN_USER="pccadmin"
 
