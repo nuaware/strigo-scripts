@@ -66,9 +66,14 @@ CHECK_FN_K8S_PrismaCloud() {
     cp /dev/null $STATE
     {
         echo -n "$BASH_SOURCE: "
-        kubectl get pods -A --no-headers | grep -v " Running " && { echo -n "FAIL_Pods "; }
-        kubectl get pods -n twistlock --no-headers | grep -E "twistlock-console.* Running " && { echo -n "OK_PrismaConsole "; }
-        kubectl get pods -n twistlock --no-headers | grep "twistlock-console" | grep -v " Running " && { echo -n "FAIL_PrismaConsole "; }
+        kubectl get pods -A --no-headers | grep -v " Running "						&& { echo -n "FAIL_Pods "; }
+        [ $(hostname) = "master" ] && mount | grep -q nfsd						&& { echo -n "OK_nfsd "; }
+        [ $(hostname) = "master" ] && [ -f /var/nfs/general/MOUNTED_from_NODE_worker1.txt ]		&& { echo -n "OK_nfsmnt "; }
+        [ $(hostname) != "master" ] && mount | grep -q nfs						&& { echo -n "OK_nfs "; }
+        [ $(hostname) != "master" ] && [ -f /nfs/general/MOUNTED_from_NODE_master.txt ]			&& { echo -n "OK_nfsmnt "; }
+        kubectl get ns twistlock									|| { echo -n "FAIL_No_twistlock_Namespace"; }
+        kubectl get pods -n twistlock --no-headers | grep -E "twistlock-console.* Running "		&& { echo -n "OK_PrismaConsole "; }
+        kubectl get pods -n twistlock --no-headers | grep "twistlock-console" | grep -v " Running "	&& { echo -n "FAIL_PrismaConsole "; }
         echo
     } >> $STATE;
 }
