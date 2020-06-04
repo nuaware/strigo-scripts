@@ -2,36 +2,11 @@
 
 SCRIPT_DIR=$(dirname $0)
 
-export ANSIBLE_INSTALL=1
-
-export UPGRADE_KUBE_LATEST=0
-export UPGRADE_KUBE_LATEST=1
-[ -z "$INSTALL_KUBERNETES" ] && export INSTALL_KUBERNETES=1
-
-export TWISTLOCK_PCC_RELEASE=20_04_163
-
-# To force a specific version, e.g. "stable-1" or "v1.18.2" set to version here and set UPGRADE_KUBE_LATEST=1
-export K8S_RELEASE="v1.18.2"
-
-export K8S_INSTALLER="kubeadm"
-
-KUBERNETES_VERSION="--kubernetes-version $K8S_RELEASE"
-[ $UPGRADE_KUBE_LATEST -eq 1 ] && KUBERNETES_VERSION="--kubernetes-version $(kubeadm version -o short)"
-
-INSTALL_PCC_SH_URL="${RAWREPO_URL}/master/install_pcc.sh"
-
-#https://cdn.twistlock.com/releases/6e6c2d6a/prisma_cloud_compute_edition_20_04_163.tar.gz
-export PRISMA_PCC_ACCESS
-export PRISMA_PCC_TAR="/tmp/prisma_cloud_compute_edition_${TWISTLOCK_PCC_RELEASE}.tar.gz"
-export PRISMA_PCC_URL="https://cdn.twistlock.com/releases/6e6c2d6a/prisma_cloud_compute_edition_${TWISTLOCK_PCC_RELEASE}.tar.gz"
-
 CNI_YAMLS="https://docs.projectcalico.org/manifests/calico.yaml"
 POD_CIDR="192.168.0.0/16"
 
 SECTION_LOG=/tmp/SECTION.log
 EVENT_LOG=/root/tmp/event.log
-
-NUM_MASTERS=1
 
 #export PRIVATE_IP=$(hostname -i)
 export PRIVATE_IP=$(ec2metadata --local-ipv4)
@@ -44,27 +19,93 @@ export NODE_NAME="unset"
 #BIN=/root/bin
 BIN=/usr/local/bin
 
-#[ $INSTALL_PCC_TWISTLOCK -ne 0 ] && {}
-[ $DOWNLOAD_PCC_TWISTLOCK -ne 0 ] && {
-    [ ! -z "$PRISMA_PCC_ACCESS" ] && echo "export PRISMA_PCC_ACCESS=$PRISMA_PCC_ACCESS" >> /root/.profile
-    [ ! -z "$PRISMA_PCC_LICENSE" ] && echo "$PRISMA_PCC_LICENSE" > /tmp/PCC.license.txt
+# Profile for Kubernetes+PrismaCloud Workshops:
+INSTALL_FN_K8S_PrismaCloud() {
+    export NUM_MASTERS=1
+    export INSTALL_KUBELAB=0
+
+    export INSTALL_JUPYTER=0
+    # To force a specific version, e.g. "stable-1" or "v1.18.2" set to version here and set UPGRADE_KUBE_LATEST=1
+    export K8S_RELEASE="v1.18.2" UPGRADE_KUBE_LATEST=1 K8S_INSTALLER="kubeadm"
+    export INSTALL_TERRAFORM=0 INSTALL_HELM=0
+    export NUM_NODES=2 # Must match !!
+    export NODE_NAMES="master worker1"
+    export USERS="ubuntu:sudo"
+    export ANSIBLE_INSTALL=1
+
+    # Prisma Cloud specific:
+    export DOWNLOAD_PCC_TWISTLOCK=0 INSTALL_PCC_TWISTLOCK=0
+    export TWISTLOCK_PCC_RELEASE=20_04_163
+    INSTALL_PCC_SH_URL="${RAWREPO_URL}/master/install_pcc.sh"
+    #https://cdn.twistlock.com/releases/6e6c2d6a/prisma_cloud_compute_edition_20_04_163.tar.gz
+    export PRISMA_PCC_TAR="/tmp/prisma_cloud_compute_edition_${TWISTLOCK_PCC_RELEASE}.tar.gz"
+    export PRISMA_PCC_URL="https://cdn.twistlock.com/releases/6e6c2d6a/prisma_cloud_compute_edition_${TWISTLOCK_PCC_RELEASE}.tar.gz"
+
+    [ "$USER_EMAIL" = "$OWNER_ID_OR_EMAIL" ] && {
+        export INSTALL_JUPYTER=1
+        export DOWNLOAD_PCC_TWISTLOCK=1 INSTALL_PCC_TWISTLOCK=1
+    }
+    echo "USER_EMAIL=<$USER_EMAIL> OWNER_ID_OR_EMAIL=<$OWNER_ID_OR_EMAIL> INSTALL_JUPYTER=$INSTALL_JUPYTER DOWNLOAD_PCC_TWISTLOCK=$DOWNLOAD_PCC_TWISTLOCK INSTALL_PCC_TWISTLOCK=$INSTALL_PCC_TWISTLOCK"
+
+    ## - CREATE_USEFUL_SCRIPTS:
+    echo 'kubectl -n frontend set image deploy/nginx nginx=nginx:1.12' > /tmp/reset_nginx_1.12.sh
+    chmod +x /tmp/reset_nginx_1.12.sh
+
+    echo 'kubectl -n frontend set image deploy/nginx nginx=nginx:1.18' > /tmp/reset_nginx_1.18.sh
+    chmod +x /tmp/reset_nginx_1.18.sh
+
+    #[ $INSTALL_PCC_TWISTLOCK -ne 0 ] && {}
+    [ $DOWNLOAD_PCC_TWISTLOCK -ne 0 ] && {
+        [ ! -z "$PRISMA_PCC_ACCESS" ] && echo "export PRISMA_PCC_ACCESS=$PRISMA_PCC_ACCESS" >> /root/.profile
+        [ ! -z "$PRISMA_PCC_LICENSE" ] && echo "$PRISMA_PCC_LICENSE" > /tmp/PCC.license.txt
+    }
 }
 
-cat >> /root/.profile <<EOF
+INIT_PROFILE_HISTORY() {
+    cat >> /root/.profile <<EOF
 export HOME=/root
 export PATH=~/bin:$PATH
 EOF
 
-cat > /root/.jupyter.profile <<EOF
+    cat > /root/.jupyter.profile <<EOF
 export HOME=/root
 export PATH=~/bin:$PATH
 EOF
 
-echo 'watch -n 2 "kubectl get nodes; echo; kubectl get ns; echo; kubectl -n kubelab -o wide get cm,pods"' >> /home/ubuntu/.bash_history
-echo 'watch -n 2 "kubectl get nodes; echo; kubectl get ns; echo; kubectl -n kubelab -o wide get cm,pods"' >> /root/.bash_history
-echo '. /root/.jupyter.profile; cd; echo HOME=$HOME' >> /root/.bash_history
+    #echo 'watch -n 2 "kubectl get nodes; echo; kubectl get ns; echo; kubectl -n kubelab -o wide get cm,pods"' >> /home/ubuntu/.bash_history
+    #echo 'watch -n 2 "kubectl get nodes; echo; kubectl get ns; echo; kubectl -n kubelab -o wide get cm,pods"' >> /root/.bash_history
+    echo '. /root/.jupyter.profile; cd; echo HOME=$HOME' >> /root/.bash_history
+    echo 'kubectl get nodes' >> /home/ubuntu/.bash_history
+    echo 'tail -100f /tmp/SECTION.log' >> /home/ubuntu/.bash_history
 
-export HOME=/root
+    export HOME=/root
+}
+
+SETUP_INSTALL_PROFILE() {
+    case $INSTALL_PROFILE in
+        INSTALL_FN_K8S_PrismaCloud)
+            echo "INSTALL_PROFILE: invoking $INSTALL_PROFILE";;
+            $INSTALL_PROFILE;;
+        *)
+            echo "INSTALL_PROFILE: Bad $INSTALL_PROFILE ... skipping";;
+    esac
+}
+
+OLD_DEFAULTS() {
+    export UPGRADE_KUBE_LATEST=0
+    export UPGRADE_KUBE_LATEST=1
+    [ -z "$INSTALL_KUBERNETES" ] && export INSTALL_KUBERNETES=1
+
+    export TWISTLOCK_PCC_RELEASE=20_04_163
+
+    # To force a specific version, e.g. "stable-1" or "v1.18.2" set to version here and set UPGRADE_KUBE_LATEST=1
+    export K8S_RELEASE="v1.18.2"
+
+    export K8S_INSTALLER="kubeadm"
+
+    KUBERNETES_VERSION="--kubernetes-version $K8S_RELEASE"
+    [ $UPGRADE_KUBE_LATEST -eq 1 ] && KUBERNETES_VERSION="--kubernetes-version $(kubeadm version -o short)"
+}
 
 ERROR() {
     echo "******************************************************"
@@ -131,14 +172,6 @@ TIMER_hhmmss() {
 
 # END: TIMER FUNCTIONS ================================================
 
-CREATE_USEFUL_SCRIPTS() {
-    echo 'kubectl -n frontend set image deploy/nginx nginx=nginx:1.12' > /tmp/reset_nginx_1.12.sh
-    chmod +x /tmp/reset_nginx_1.12.sh
-
-    echo 'kubectl -n frontend set image deploy/nginx nginx=nginx:1.18' > /tmp/reset_nginx_1.18.sh
-    chmod +x /tmp/reset_nginx_1.18.sh
-}
-
 set_EVENT_WORKSPACE_NODES() {
     [ -z "$NUM_NODES" ] && die "Expected number of nodes is not set/exported from invoking user-data script"
 
@@ -166,8 +199,6 @@ set_EVENT_WORKSPACE_NODES() {
     $SCRIPT_DIR/get_strigo_info.py -v -ips | tee -a $EVENT_LOG
 
     USER_EMAIL=$($SCRIPT_DIR/get_strigo_info.py -oem | tee -a $EVENT_LOG)
-    [ "$USER_EMAIL" = "$OWNER_ID_OR_EMAIL" ] && INSTALL_JUPYTER=1
-    echo "USER_EMAIL=<$USER_EMAIL> OWNER_ID_OR_EMAIL=<$OWNER_ID_OR_EMAIL> INSTALL_JUPYTER=$INSTALL_JUPYTER"
 }
 
 START_DOCKER_plus() {
@@ -666,6 +697,9 @@ WAIT_POD_RUNNING() {
 
 TIMER_START
 
+INIT_PROFILE_HISTORY
+
+## -- Get node/event info --------------------------------------
 SECTION_LOG "PUBLIC_IP=$PUBLIC_IP"
 
 [ -z "$API_KEY"           ] && die "API_KEY is unset"
@@ -676,7 +710,14 @@ SECTION_LOG "PUBLIC_IP=$PUBLIC_IP"
 [ -z "$PUBLIC_IP"         ] && die "PUBLIC_IP is unset"
 
 echo "Checking for Events owned by '$OWNER_ID_OR_EMAIL'"
+set_EVENT_WORKSPACE_NODES
+[ -z "$USER_EMAIL" ]        && die "USER_EMAIL is unset"
 
+## -- Set install profile --------------------------------------
+SETUP_INSTALL_PROFILE
+OLD_DEFAULTS
+
+## -- Start install --------------------------------------------
 [ ! -z "$REGISTER_URL"    ] && SECTION REGISTER_INSTALL_START
 
 APT_INSTALL_PACKAGES="jq zip"
@@ -689,9 +730,6 @@ CREATE_USEFUL_SCRIPTS
 
 SECTION START_DOCKER_plus
 # SECTION GET_LAB_RESOURCES - CAREFUL THIS WILL EXPOSE YOUR API_KEY/ORG_ID
-
-set_EVENT_WORKSPACE_NODES
-[ -z "$USER_EMAIL" ]        && die "USER_EMAIL is unset"
 
 # Perform all kubeadm operations from Master1:
 if [ $NODE_IDX -eq 0 ] ; then
