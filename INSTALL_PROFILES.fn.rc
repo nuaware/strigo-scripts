@@ -1,14 +1,22 @@
 
 # Profile for Kubernetes+PrismaCloud Workshops:
 INSTALL_FN_K8S_PrismaCloud() {
-    export INSTALL_KUBELAB=0
+    # MY TOOLS:
+    export INSTALL_JUPYTER=0 INSTALL_KUBELAB=0
 
-    export INSTALL_JUPYTER=0
-    # To force a specific version, e.g. "stable-1" or "v1.18.2" set to version here and set UPGRADE_KUBE_LATEST=1
-    export K8S_RELEASE="v1.18.2" UPGRADE_KUBE_LATEST=1 K8S_INSTALLER="kubeadm"
+    # TOOLS:
     export INSTALL_TERRAFORM=0 INSTALL_HELM=0
-    export USERS="ubuntu:sudo"
     export ANSIBLE_INSTALL=1
+
+    # KUBERNETES+INSTALLER VERSIONS:
+    # To force a specific version, e.g. "stable-1" or "v1.18.2" set to version here
+    # TO upgrade to latest set UPGRADE_KUBE_LATEST=1
+    #export K8S_RELEASE="v1.18.2"
+    export UPGRADE_KUBE_LATEST=1
+    export K8S_INSTALLER="kubeadm"
+    #export K8S_INSTALLER="rancher/rke"
+
+    export USERS="ubuntu:sudo"
 
     # Prisma Cloud specific:
     export DOWNLOAD_PCC_TWISTLOCK=0 INSTALL_PCC_TWISTLOCK=0
@@ -18,8 +26,11 @@ INSTALL_FN_K8S_PrismaCloud() {
     export PRISMA_PCC_TAR="/tmp/prisma_cloud_compute_edition_${TWISTLOCK_PCC_RELEASE}.tar.gz"
     export PRISMA_PCC_URL="https://cdn.twistlock.com/releases/6e6c2d6a/prisma_cloud_compute_edition_${TWISTLOCK_PCC_RELEASE}.tar.gz"
 
+    # For owner we choose to install extra items:
     [ "$USER_EMAIL" = "$OWNER_ID_OR_EMAIL" ] && {
         export INSTALL_JUPYTER=1
+
+        # Student install does not download/install PrismaCloud: but I'm lazy ...
         export DOWNLOAD_PCC_TWISTLOCK=1 INSTALL_PCC_TWISTLOCK=1
     }
     echo "USER_EMAIL=<$USER_EMAIL> OWNER_ID_OR_EMAIL=<$OWNER_ID_OR_EMAIL> INSTALL_JUPYTER=$INSTALL_JUPYTER DOWNLOAD_PCC_TWISTLOCK=$DOWNLOAD_PCC_TWISTLOCK INSTALL_PCC_TWISTLOCK=$INSTALL_PCC_TWISTLOCK"
