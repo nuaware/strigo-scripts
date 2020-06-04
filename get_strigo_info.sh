@@ -34,7 +34,9 @@ die() {
 ## -- arguments: ------------------------------------------------
 
 VERBOSE=""
+SET_X=""
 [ "$1" = "-v" ] && { VERBOSE="-v"; shift; }
+[ "$1" = "-x" ] && { SET_X="-x"; set -x; shift; }
 
 RCFILE=$1
 shift
@@ -80,6 +82,7 @@ if [ "$1" = "-ssh" ]; then
     shift;
 
     [ ! -f $SSH_KEY ] && SSH_KEY=~/.ssh/id_rsa
+    echo SSH_KEY=$SSH_KEY
 
     #cat > /tmp/XX <<EOF
     #workspaceId=zB4dyyJJPgE5RfiKS event_id=YY4wZyFm6GyiD7EER owner_email=michael.bright@nuaware.com created_at=2020-06-03T13:17:26.570Z
@@ -108,8 +111,10 @@ if [ "$1" = "-ssh" ]; then
 	    echo "workspace$WORKSPACE: ${IP}"
 
 	    if [ -z "$1" ]; then
+                set -x;
 	        ssh -qt -i $SSH_KEY ubuntu@$IP uptime
 	    else
+                set -x;
 	        ssh -qt -i $SSH_KEY ubuntu@$IP "$*"
 	    fi
 	}
