@@ -11,5 +11,5 @@ env
 git clone $REPO_URL strigo-scripts; BOOT_SETUP_SH=$DIR/strigo-scripts/setup_k8s_at_boot.sh
 chmod +x $DIR/strigo-scripts/*.sh $DIR/strigo-scripts/*.py
 
-#bash -x $BOOT_SETUP_SH
-$BOOT_SETUP_SH
+DEBUG_BASH_X="bash -x"
+$DEBUG_BASH_X $BOOT_SETUP_SH
