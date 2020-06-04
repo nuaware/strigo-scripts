@@ -2,6 +2,8 @@
 
 set -x
 
+. /root/tmp/PRISMACLOUD.vars
+
 PUBLIC_HOST=$(ec2metadata --public-host)
 ADMIN_USER="pccadmin"
 
@@ -138,8 +140,8 @@ GET_ADMIN_NODE_PORT() {
 }
 
 INIT_CONSOLE() {
-    [ -z "$PRISMA_PCC_TAR"    ] && die "$PRISMA_PCC_TAR env var is unset"
-    [ -z "$PRISMA_PCC_ACCESS" ] && die "$PRISMA_PCC_ACCESS env var is unset"
+    [ -z "$PRISMA_PCC_TAR"    ] && die "\$PRISMA_PCC_TAR env var is unset"
+    [ -z "$PRISMA_PCC_ACCESS" ] && die "\$PRISMA_PCC_ACCESS env var is unset"
 
     ping -c 1 registry-auth.twistlock.com || die " Cant reach registry";
     UNPACK_TAR
