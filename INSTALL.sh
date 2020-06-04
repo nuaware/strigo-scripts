@@ -654,6 +654,12 @@ FINISH() {
         #BAD_PODS=$(kubectl get pods -A -o json | jq '.items[] | select(.status.reason!=null)' | wc -l)
         kubectl get pods -A --no-headers | grep -v Running | SECTION_LOG
         BAD_PODS=$(kubectl get pods -A --no-headers | grep -v Running | wc -l)
+
+	# Show status of none-Running Pods:
+	BAD_PODS_NS_AND_NAME=$(kubectl get pods -A --no-headers | grep -v Running | awk '{ print $1, $2; }')
+	for BAD_POD_NS_AND_NAME in $BAD_PODS_NS_AND_NAME; do
+            kubectl describe pod -n $BAD_POD_NS_AND_NAME | grep -A 10 Events:
+	done
     done
 
     scp worker1:/tmp/SECTION.log /tmp/SECTION.log.worker1
