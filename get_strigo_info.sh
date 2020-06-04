@@ -2,6 +2,8 @@
 
 DIR=$(dirname $0)
 
+SSH_INIT_KEYS="-o StrictHostKeyChecking=no"
+
 ## -- usage: ----------------------------------------------------
 
 # > ./get_strigo_info.sh nuaware_pcc_vars.rc -E
@@ -112,10 +114,10 @@ if [ "$1" = "-ssh" ]; then
 
 	    if [ -z "$1" ]; then
                 set -x;
-	        ssh -qt -i $SSH_KEY ubuntu@$IP uptime
+	        ssh $SSH_INIT_KEYS -qt -i $SSH_KEY ubuntu@$IP uptime
 	    else
                 set -x;
-	        ssh -qt -i $SSH_KEY ubuntu@$IP "$*"
+	        ssh $SSH_INIT_KEYS -qt -i $SSH_KEY ubuntu@$IP "$*"
 	    fi
 	}
         #echo "LINE: $IP_INFO"
