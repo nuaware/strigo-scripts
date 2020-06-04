@@ -466,10 +466,16 @@ INSTALL_PRISMACLOUD() {
     done
     ls -altr ${NFS_CHECK}* | SECTION_LOG
 
-    wget -O /tmp/install_pcc.sh $INSTALL_PRISMACLOUD_SH_URL
+    wget -O /tmp/INSTALL_PRISMACLOUD.sh $INSTALL_PRISMACLOUD_SH_URL
 
-    chmod +x /tmp/install_pcc.sh
-    /tmp/install_pcc.sh --init-console
+    chmod +x /tmp/INSTALL_PRISMACLOUD.sh
+
+    {
+        echo export PRISMA_PCC_TAR="$PRISMA_PCC_TAR";
+        echo export PRISMA_PCC_ACCESS="$PRISMA_PCC_ACCESS";
+    } > /root/tmp/PRISMACLOUD.vars
+
+    /tmp/INSTALL_PRISMACLOUD.sh --init-console
 }
 
 INSTALL_HELM() {
