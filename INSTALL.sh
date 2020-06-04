@@ -531,7 +531,7 @@ KUBE_RECORD_POD_STARTUP_EVENTS() {
 
     for NAME in $(kubectl get pods -n $NS --no-headers | awk '{ print $1; }'); do
         echo
-        kubectl get pod -n $NS pod/$NAME
+        kubectl get      -n $NS pod/$NAME
         kubectl describe -n $NS pod/$NAME | sed -e "s?^Events:?Events: $NS/$NAME?" | grep -A 10 Events:
     done | tee /tmp/${NS}.Pods.Events.log
 }
