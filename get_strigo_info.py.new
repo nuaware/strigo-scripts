@@ -60,15 +60,6 @@ def getClasses():
     #print(type(res)); #print(res)
     return res.json()
 
-def getEventClass( eventId ):
-    events = getEvents()
-    if VERBOSE: print(f"event={json.dumps(events,  indent=2, sort_keys=True)}")
-
-    for ev in events['data']:
-        if ev['id'] == eventId: return ev['class_id']
-
-    return None
-
 def getMyEventField( owner_id_or_email, field='id', status='live', multiple=False ):
     events = getEvents()
     if VERBOSE: print(f"event={json.dumps(events,  indent=2, sort_keys=True)}")
@@ -196,39 +187,26 @@ while len(sys.argv) > 0:
     if arg == '-o': # Specify owner_id or owner_email to use
         arg=sys.argv[0]; sys.argv=sys.argv[1:]
         OWNER_ID_OR_EMAIL=arg
-        if VERBOSE: print(f"Setting OWNER_ID_OR_EMAIL={OWNER_ID_OR_EMAIL}")
 
     if arg == '-set-e': # Set event_id of current event
-        arg=sys.argv[0]; sys.argv=sys.argv[1:]
-        eventId=arg
-        if VERBOSE: print(f"Setting eventId={eventId}")
+        eventId=sys.argv[1]; sys.argv=sys.argv[2:]
 
     if arg == '-e': # Return event_id of current event
         eventId=getCurrentEventField()
-        if VERBOSE:
-            print(f"eventId={eventId}")
-        else:
-            print(eventId)
+        #print(f"eventId={eventId}")
+        print(eventId)
 
     if arg == '-E': # Show all events
         eventIds=getAllCurrentEventsField( field='id', multiple=True )
-        if VERBOSE:
-            print(f"eventIds={eventIds}")
         for eventId in eventIds:
             event=getEvent( eventId )
             print(f"eventId={eventId} status={event['status']} name={event['name']} owner_email={event['owner']['email']}")
 
     if arg == '-c': # Return class_id of current event
-        # if eventId is set use this, else get from current event
-        if eventId:
-            classId = getEventClass( eventId )
-        else:
-            classId = getMyEventField( OWNER_ID_OR_EMAIL, field='class_id' )
-
-        if VERBOSE:
-            print(f"classId={classId}")
-        else:
-            print(classId)
+        # recode to get eventId if not set, then get classId
+        classId = getMyEventField( OWNER_ID_OR_EMAIL, field='class_id' )
+        #print(f"classId={classId}")
+        print(classId)
 
     if arg == '-C': # Return all classes
         classes = getClasses()
@@ -239,7 +217,7 @@ while len(sys.argv) > 0:
     if arg == '-w': # Return workspace_id of current workspace (this student or owner)
         if not eventId:
             eventId = getMyEventField( OWNER_ID_OR_EMAIL )
-        if VERBOSE: print(f"eventId={eventId}")
+            if VERBOSE: print(f"eventId={eventId}")
         ( ownerId, owner_email, workspaceId, workspacePrivateIps, workspacePublicIps ) = \
             getMyWorkSpaceDetails( eventId )
         print(workspaceId)
@@ -247,7 +225,7 @@ while len(sys.argv) > 0:
     if arg == '-W': # Return workspace_id's of all workspaces of current event
         if not eventId:
             eventId = getMyEventField( OWNER_ID_OR_EMAIL )
-        if VERBOSE: print(f"eventId={eventId}")
+            if VERBOSE: print(f"eventId={eventId}")
         #eventId = getCurrentEventField( 'id' )
         #eventId = getMyEventField( OWNER_ID_OR_EMAIL )
         if VERBOSE: print(f"eventId={eventId}")
@@ -272,6 +250,7 @@ while len(sys.argv) > 0:
         #eventId = getMyEventField( OWNER_ID_OR_EMAIL )
         if not eventId:
             eventId = getMyEventField( OWNER_ID_OR_EMAIL )
+            if VERBOSE: print(f"eventId={eventId}")
         if VERBOSE: print(f"eventId={eventId}")
         ( ownerId, owner_email, workspaceId, workspacePrivateIps, workspacePublicIps ) = \
             getMyWorkSpaceDetails( eventId )
@@ -281,6 +260,7 @@ while len(sys.argv) > 0:
         #eventId = getMyEventField( OWNER_ID_OR_EMAIL )
         if not eventId:
             eventId = getMyEventField( OWNER_ID_OR_EMAIL )
+            if VERBOSE: print(f"eventId={eventId}")
         if VERBOSE: print(f"eventId={eventId}")
         ( ownerId, owner_email, workspaceId, workspacePrivateIps, workspacePublicIps ) = \
             getMyWorkSpaceDetails( eventId )
@@ -290,6 +270,7 @@ while len(sys.argv) > 0:
         #eventId = getMyEventField( OWNER_ID_OR_EMAIL )
         if not eventId:
             eventId = getMyEventField( OWNER_ID_OR_EMAIL )
+            if VERBOSE: print(f"eventId={eventId}")
         if VERBOSE: print(f"eventId={eventId}")
         ( ownerId, owner_email, workspaceId, workspacePrivateIps, workspacePublicIps ) = \
             getMyWorkSpaceDetails( eventId )
@@ -303,13 +284,16 @@ while len(sys.argv) > 0:
         sys.exit(0)
 
     if arg == '-IPS': # Return ips of VMs of all workspaces of current event
-        if not eventId:
-            #eventId = getMyEventField( OWNER_ID_OR_EMAIL )
-            eventId = getCurrentEventField( 'id' )
+        eventId = getCurrentEventField( 'id' )
+        #eventId = getMyEventField( OWNER_ID_OR_EMAIL )
         if VERBOSE: print(f"eventId={eventId}")
         workspaces = getEventWorkspaces( eventId )
         if VERBOSE: print(f"workspaces={workspaces}")
-
+        #for w in workspaces['data']:
+            #id=w['id']
+            ##print(f"workspaceId={id} {w}")
+            ##workspaceId=kmx4yZhao6ni4ScAj {'id': 'kmx4yZhao6ni4ScAj', 'event_id': '8hJkTFjC87yR9Dn9f', 'created_at': '2020-06-04T03:58:02.391Z', 'type': 'host', 'owner': {'id': 'hX8PLJfBX4ojEKZxu', 'email': 'michael.bright@nuaware.com'}, 'online_status': 'deprecated', 'last_seen': '2020-06-04T05:21:08.201Z', 'need_assistance': False}
+            #print(f"workspaceId={id} event_id={w['event_id']} owner_email={w['owner']['email']} created_at={w['created_at']}")
         for ws_data in workspaces['data']:
             workspaceId=ws_data['id']
             print(f"workspaceId={workspaceId} event_id={ws_data['event_id']} owner_email={ws_data['owner']['email']} created_at={ws_data['created_at']}")
@@ -326,8 +310,10 @@ while len(sys.argv) > 0:
         sys.exit(0)
 
     if arg == '-idx': # Get index of the current VM e.g. so that 1 is Master, 2 is Slave etc ...
+        #eventId = getMyEventField( OWNER_ID_OR_EMAIL )
         if not eventId:
             eventId = getMyEventField( OWNER_ID_OR_EMAIL )
+            if VERBOSE: print(f"eventId={eventId}")
         if VERBOSE: print(f"eventId={eventId}")
         idx = getMyNodeIndex( eventId )
         print(idx)
@@ -336,6 +322,7 @@ while len(sys.argv) > 0:
         #eventId = getMyEventField( OWNER_ID_OR_EMAIL )
         if not eventId:
             eventId = getMyEventField( OWNER_ID_OR_EMAIL )
+            if VERBOSE: print(f"eventId={eventId}")
         if VERBOSE: print(f"eventId={eventId}")
         nodes = getNumberOfNodes( eventId )
         print(nodes)

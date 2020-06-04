@@ -6,6 +6,10 @@
 # eventId=YY4wZyFm6GyiD7EER status=live name=Untitled training event owner_email=michael.bright@nuaware.com
 # eventId=2ZCXwpffECibjSLZB status=live name=Untitled training event owner_email=michael.bright@nuaware.com
 
+# > ./get_strigo_info.sh nuaware_pcc_vars.rc --private-ip 172.31.10.64 -v -W
+# eventId=jRLS35YPuBGdTYrJw
+# workspaces={'result': 'success', 'data': [{'id': 'DAjXBsDJrW4NXRBiz', 'event_id': 'jRLS35YPuBGdTYrJw', 'created_at': '2020-06-04T08:24:59.267Z', 'type': 'student', 'owner': {'id': 'TQhtXqawCNLnMui2p', 'email': 'mjbrightfr@gmail.com'}, 'online_status': 'deprecated', 'last_seen': '2020-06-04T08:46:21.258Z', 'need_assistance': False}, {'id': 'g2NcRLH4J7T2TfYen', 'event_id': 'jRLS35YPuBGdTYrJw', 'created_at': '2020-06-04T08:21:41.786Z', 'type': 'host', 'owner': {'id': 'hX8PLJfBX4ojEKZxu', 'email': 'michael.bright@nuaware.com'}, 'online_status': 'deprecated', 'last_seen': '2020-06-04T09:03:23.029Z', 'need_assistance': False}]}
+#
 # > ./get_strigo_info.sh nuaware_pcc_vars.rc -W
 # Traceback (most recent call last):
 #   File "./get_strigo_info.py", line 223, in <module>
@@ -26,6 +30,9 @@ die() {
 }
 
 ## -- arguments: ------------------------------------------------
+
+VERBOSE=""
+[ "$1" = "-v" ] && { VERBOSE="-v"; shift; }
 
 RCFILE=$1
 shift
@@ -53,6 +60,9 @@ fi
 
 . $RCFILE
 
+#ARGS="$VERBOSE -oem $OWNER_ID_OR_EMAIL"
 
+#./get_strigo_info.py $ARGS $*
+set -x
 ./get_strigo_info.py $*
 
