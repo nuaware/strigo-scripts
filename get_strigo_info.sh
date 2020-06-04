@@ -36,9 +36,11 @@ shift
 export PRIVATE_IP="unset"
 export PUBLIC_IP="unset"
 
-# If running in an ec2 VM:
-while ec2metadata 2>/dev/null && {
-	export PRIVATE_IP=$(ec2metadata --local-ipv4) PUBLIC_IP=$(ec2metadata --public-ipv4)
+# If running in an ec2 VM: assume the case if ec2metatdata present:
+which ec2metadata 2>/dev/null && {
+	# Check we're not running under WSL:
+	uname -a | grep microsoft ||
+	    export PRIVATE_IP=$(ec2metadata --local-ipv4) PUBLIC_IP=$(ec2metadata --public-ipv4)
 }
 
 if [ "$1" = "--private-ip" ]; then
