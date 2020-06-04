@@ -215,18 +215,39 @@ def getCurrentEventField( field='id', multiple=False ):
     if VERBOSE: print(f"getMyEventField( {OWNER_ID_OR_EMAIL}, {field}, {multiple} )")
     return getMyEventField( OWNER_ID_OR_EMAIL, field=field, status='live', multiple=multiple )
 
-def showWorkspaceDetail(ws_data):
+def showWorkspaceDetail(ws_data, format='default', ssh_key=None):
+    print(f"IdentityFile={ssh_key}")
     workspaceId=ws_data['id']
-    print(f"workspaceId={workspaceId} event_id={ws_data['event_id']} owner_email={ws_data['owner']['email']} created_at={ws_data['created_at']}")
+    INFO=f"workspaceId={workspaceId} event_id={ws_data['event_id']} owner_email={ws_data['owner']['email']} created_at={ws_data['created_at']}"
+    if format == 'ssh_config':
+        print()
+        print(f"# {INFO}")
+    else:
+        print(INFO)
+
     url = f"https://app.strigo.io/api/v1/events/{eventId}/workspaces/{workspaceId}/resources"
     workspace = requests.get(url, headers=headers).json()
+    inst_no=-1
     for lab_inst in workspace['data']:
+        inst_no+=1
         lab_instance_id=lab_inst['id']
         private_ip=lab_inst['private_ip']
         public_ip=lab_inst['public_ip']
-        #print(f"workspaceId={id} event_id={w['event_id']} owner_email={w['owner']['email']} created_at={w['created_at']}")
         #if VERBOSE: print(f"lab_id={lab_instance_id} private_ip=${private_ip} public_ip={public_ip}")
-        print(f"  lab_id={lab_instance_id} private_ip=${private_ip} public_ip={public_ip}")
+
+        if format == 'ssh_config':
+            w_owner_email=ws_data['owner']['email']
+            host=w_owner_email.replace('@', '_')
+            if inst_no == 0:
+                host=f"{host}_master"
+            else:
+                host=f"{host}_worker{inst_no}"
+            user='ubuntu'
+
+            #print(f"\nHost {host}\n  Hostname={public_ip}\n  User={user}\n  IdentityFile={ssh_key}")
+            print(f"\nHost {host}\n  Hostname={public_ip}\n  User={user}")
+        else:
+            print(f"  lab_id={lab_instance_id} private_ip=${private_ip} public_ip={public_ip}")
 
 
 eventId=None
@@ -268,7 +289,8 @@ while len(sys.argv) > 0:
         if VERBOSE: print(f"eventId={eventId} status={event['status']} name={event['name']} owner_email={event['owner']['email']} date_start={event['date_start']} date_end={event['date_end']}")
 
     if arg == '-e': # Return event_id of current event
-        eventId=getCurrentEventField()
+        if not eventId:
+            eventId=getCurrentEventField()
         if VERBOSE:
             print(f"eventId={eventId}")
         else:
@@ -364,6 +386,17 @@ while len(sys.argv) > 0:
             workspaceId=ws_data['id']
             if ws_data['owner']['email'] == OWNER_ID_OR_EMAIL:
                 showWorkspaceDetail(ws_data)
+
+    if arg == '-ssh_config': # Create an ssh_config file for all VMs of all workspaces of current event
+        ssh_key='~/.ssh/id_rsa'
+        if len(sys.argv) > 0:
+            ssh_key=sys.argv[0]
+
+        #print(ssh_key)
+        (eventId, workspaces) = getWorkspaces(eventId)
+
+        for ws_data in workspaces['data']:
+            showWorkspaceDetail(ws_data, format='ssh_config', ssh_key=ssh_key)
 
     if arg == '-IPS': # Return ips of VMs of all workspaces of current event
         (eventId, workspaces) = getWorkspaces(eventId)
