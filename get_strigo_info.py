@@ -51,25 +51,52 @@ def response(url):
 def getEvents():
     url = "https://app.strigo.io/api/v1/events"
     res = requests.get(url, headers=headers)
-    #print(type(res))
-    #print(res)
+    #print(type(res)); #print(res)
     return res.json()
 
-def getMyEventField( owner_id_or_email, field='id', status='live' ):
+def getClasses():
+    url = "https://app.strigo.io/api/v1/classes"
+    res = requests.get(url, headers=headers)
+    #print(type(res)); #print(res)
+    return res.json()
+
+def getMyEventField( owner_id_or_email, field='id', status='live', multiple=False ):
     events = getEvents()
+    if VERBOSE: print(f"event={json.dumps(events,  indent=2, sort_keys=True)}")
 
     #print(events)
 
+    fields=[]
     for ev in events['data']:
         #print(ev)
+        if VERBOSE: print(f"eventId={ev['id']} status={ev['status']} owner_mail={ev['owner']['email']}")
+        if VERBOSE: print(f"TO MATCH status={status} owner_mail={owner_id_or_email}")
         if ev['status'] == status and \
                 (ev['owner']['email'] == owner_id_or_email or \
                  ev['owner']['id'] == owner_id_or_email):
+            #print("MATCH")
             if field == '*':
                 if VERBOSE: print(f"event={json.dumps(ev,  indent=2, sort_keys=True)}")
             else:
                 if VERBOSE: print(f"event[{field}]={ev[field]}")
-                return ev[field]
+                if multiple:
+                    fields.append(ev[field])
+                else:
+                    # Verify is this the currentId (does it have a worskspace matching our PRIVATE_IP?)
+                    eventId = ev['id']
+                    if VERBOSE: print(f"getMyWorkSpaceDetails( {eventId} )={ getMyWorkSpaceDetails( eventId ) }")
+                    workspaceDetails=getMyWorkSpaceDetails( eventId )
+                    if workspaceDetails[0] != None:
+                        if VERBOSE: print(ev[field])
+                        return ev[field]
+    return fields
+
+def getEvent( eventId ):
+    events = getEvents()
+    for ev in events['data']:
+        if ev['id'] == eventId:
+            return ev
+    return None
 
 def getEventWorkspaces( eventId ):
     url = f"https://app.strigo.io/api/v1/events/{eventId}/workspaces" 
@@ -140,6 +167,15 @@ def getMyNodeIndex( eventId ):
 # Shift off 'prog' argument:
 prog=sys.argv[0]; sys.argv=sys.argv[1:]
 
+#def getAllCurrentEventsField( field='id', multiple=True ):
+def getAllCurrentEventsField( field='*', multiple=True ):
+    if VERBOSE: print(f"getMyEventField( {OWNER_ID_OR_EMAIL}, {field}, {multiple} )")
+    return getMyEventField( OWNER_ID_OR_EMAIL, field=field, status='live', multiple=multiple )
+
+def getCurrentEventField( field='id', multiple=False ):
+    if VERBOSE: print(f"getMyEventField( {OWNER_ID_OR_EMAIL}, {field}, {multiple} )")
+    return getMyEventField( OWNER_ID_OR_EMAIL, field=field, status='live', multiple=multiple )
+
 while len(sys.argv) > 0:
     arg=sys.argv[0]; sys.argv=sys.argv[1:]
 
@@ -151,22 +187,26 @@ while len(sys.argv) > 0:
         OWNER_ID_OR_EMAIL=arg
 
     if arg == '-e': # Return event_id of current event
-        eventId = getMyEventField( OWNER_ID_OR_EMAIL )
+        eventId=getCurrentEventField()
         #print(f"eventId={eventId}")
         print(eventId)
+
+    if arg == '-E': # Show all events
+        eventIds=getAllCurrentEventsField( field='id', multiple=True )
+        for eventId in eventIds:
+            event=getEvent( eventId )
+            print(f"eventId={eventId} status={event['status']} name={event['name']} owner_email={event['owner']['email']}")
 
     if arg == '-c': # Return class_id of current event
         classId = getMyEventField( OWNER_ID_OR_EMAIL, field='class_id' )
         #print(f"classId={classId}")
         print(classId)
 
-    if arg == '-W': # Return workspace_id's of all workspaces
-        eventId = getMyEventField( OWNER_ID_OR_EMAIL )
-        if VERBOSE: print(f"eventId={eventId}")
-        workspaces = getEventWorkspaces( eventId )
-        if VERBOSE: print(f"workspaces={workspaces}")
-        for w in workspaces['data']:
-            print(w['id'])
+    if arg == '-C': # Return all classes
+        classes = getClasses()
+        #print(f"classes={classes}")
+        for _class in classes['data']:
+            print(f"classId={_class['id']} name={_class['name']} owner_email={_class['owner']['email']}")
 
     if arg == '-w': # Return workspace_id of current workspace (this student or owner)
         eventId = getMyEventField( OWNER_ID_OR_EMAIL )
@@ -174,6 +214,26 @@ while len(sys.argv) > 0:
         ( ownerId, owner_email, workspaceId, workspacePrivateIps, workspacePublicIps ) = \
             getMyWorkSpaceDetails( eventId )
         print(workspaceId)
+
+    if arg == '-W': # Return workspace_id's of all workspaces of current event
+        eventId = getMyEventField( OWNER_ID_OR_EMAIL )
+        if VERBOSE: print(f"eventId={eventId}")
+        workspaces = getEventWorkspaces( eventId )
+        if VERBOSE: print(f"workspaces={workspaces}")
+        for w in workspaces['data']:
+            id=w['id']
+            #print(f"workspaceId={id} {w}")
+            #workspaceId=kmx4yZhao6ni4ScAj {'id': 'kmx4yZhao6ni4ScAj', 'event_id': '8hJkTFjC87yR9Dn9f', 'created_at': '2020-06-04T03:58:02.391Z', 'type': 'host', 'owner': {'id': 'hX8PLJfBX4ojEKZxu', 'email': 'michael.bright@nuaware.com'}, 'online_status': 'deprecated', 'last_seen': '2020-06-04T05:21:08.201Z', 'need_assistance': False}
+            print(f"workspaceId={id} event_id={w['event_id']} owner_email={w['owner']['email']} created_at={w['created_at']}")
+
+    if arg == '-WE': # Return workspace_id's of all workspaces of all events
+        eventIds=getAllCurrentEventsField( field='id', multiple=True )
+        for eventId in eventIds:
+            event=getEvent( eventId )
+            workspaces = getEventWorkspaces( eventId )
+            for w in workspaces['data']:
+                id=w['id']
+                print(f"workspaceId={id} event_id={w['event_id']} owner_email={w['owner']['email']} created_at={w['created_at']}")
 
     if arg == '-oid': # Return owner_id of current workspace (this student or owner)
         eventId = getMyEventField( OWNER_ID_OR_EMAIL )
@@ -201,6 +261,31 @@ while len(sys.argv) > 0:
             sys.exit(0)
 
         print( workspacePrivateIps, workspacePublicIps )
+        sys.exit(0)
+
+    if arg == '-IPS': # Return ips of VMs of all workspaces of current event
+        eventId = getMyEventField( OWNER_ID_OR_EMAIL )
+        if VERBOSE: print(f"eventId={eventId}")
+        workspaces = getEventWorkspaces( eventId )
+        if VERBOSE: print(f"workspaces={workspaces}")
+        #for w in workspaces['data']:
+            #id=w['id']
+            ##print(f"workspaceId={id} {w}")
+            ##workspaceId=kmx4yZhao6ni4ScAj {'id': 'kmx4yZhao6ni4ScAj', 'event_id': '8hJkTFjC87yR9Dn9f', 'created_at': '2020-06-04T03:58:02.391Z', 'type': 'host', 'owner': {'id': 'hX8PLJfBX4ojEKZxu', 'email': 'michael.bright@nuaware.com'}, 'online_status': 'deprecated', 'last_seen': '2020-06-04T05:21:08.201Z', 'need_assistance': False}
+            #print(f"workspaceId={id} event_id={w['event_id']} owner_email={w['owner']['email']} created_at={w['created_at']}")
+        for ws_data in workspaces['data']:
+            workspaceId=ws_data['id']
+            print(f"workspaceId={workspaceId} event_id={ws_data['event_id']} owner_email={ws_data['owner']['email']} created_at={ws_data['created_at']}")
+            url = f"https://app.strigo.io/api/v1/events/{eventId}/workspaces/{workspaceId}/resources"
+            workspace = requests.get(url, headers=headers).json()
+            for lab_inst in workspace['data']:
+                lab_instance_id=lab_inst['id']
+                private_ip=lab_inst['private_ip']
+                public_ip=lab_inst['public_ip']
+                #print(f"workspaceId={id} event_id={w['event_id']} owner_email={w['owner']['email']} created_at={w['created_at']}")
+                #if VERBOSE: print(f"lab_id={lab_instance_id} private_ip=${private_ip} public_ip={public_ip}")
+                print(f"  lab_id={lab_instance_id} private_ip=${private_ip} public_ip={public_ip}")
+
         sys.exit(0)
 
     if arg == '-idx': # Get index of the current VM e.g. so that 1 is Master, 2 is Slave etc ...
