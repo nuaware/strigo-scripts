@@ -178,7 +178,7 @@ START_DOCKER_plus() {
     usermod -aG docker ubuntu
     #{ echo "ubuntu: docker ps"; sudo -u ubuntu docker ps; } | SECTION_LOG
     docker version -f "Docker Version Client={{.Client.Version}} Server={{.Server.Version}}" | SECTION_LOG
-    echo "ubuntu: docker version"; sudo -i docker version
+    echo "ubuntu: docker version"; sudo docker version
     # newgrp docker # In shell allow immediate joining of group / use of docker
 }
 
@@ -461,7 +461,7 @@ EOF
 INSTALL_PCC_TWISTLOCK() {
 
     MAX_LOOPS=10; LOOP=0;
-    while !  ls -altrh /var/nfs/general/MOUNTED_from_NODE_worker* ; do
+    while !  ls -altrh /var/nfs/general/MOUNTED_from_NODE_worker* 2>/dev/null ; do
 	echo "Waiting for worker nodes to mount NFS share ..."
         let LOOP=LOOP+1; sleep 12; [ $LOOP -ge $MAX_LOOPS ] && die "Failed waiting for $WORKER_NODE_NAME to mount NFS share"
     done
