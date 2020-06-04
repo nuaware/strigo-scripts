@@ -53,22 +53,6 @@ SETUP_INSTALL_PROFILE() {
     esac
 }
 
-OLD_DEFAULTS() {
-    export UPGRADE_KUBE_LATEST=0
-    export UPGRADE_KUBE_LATEST=1
-    [ -z "$INSTALL_KUBERNETES" ] && export INSTALL_KUBERNETES=1
-
-    export TWISTLOCK_PCC_RELEASE=20_04_163
-
-    # To force a specific version, e.g. "stable-1" or "v1.18.2" set to version here and set UPGRADE_KUBE_LATEST=1
-    export K8S_RELEASE="v1.18.2"
-
-    export K8S_INSTALLER="kubeadm"
-
-    KUBERNETES_VERSION="--kubernetes-version $K8S_RELEASE"
-    [ $UPGRADE_KUBE_LATEST -eq 1 ] && KUBERNETES_VERSION="--kubernetes-version $(kubeadm version -o short)"
-}
-
 ERROR() {
     echo "******************************************************"
     echo "** ERROR: $*"
@@ -198,6 +182,9 @@ KUBEADM_INIT() {
     export NODE_NAME="master"
     sudo hostnamectl set-hostname $NODE_NAME
     echo "local hostname=$(hostname)" | SECTION_LOG
+
+    KUBERNETES_VERSION="--kubernetes-version $K8S_RELEASE"
+    [ $UPGRADE_KUBE_LATEST -eq 1 ] && KUBERNETES_VERSION="--kubernetes-version $(kubeadm version -o short)"
 
     kubeadm init $KUBERNETES_VERSION --node-name $NODE_NAME \
             --pod-network-cidr=$POD_CIDR --kubernetes-version=$K8S_RELEASE \
@@ -683,7 +670,7 @@ set_EVENT_WORKSPACE_NODES
 
 ## -- Set install profile --------------------------------------
 SETUP_INSTALL_PROFILE
-OLD_DEFAULTS
+SET_MISSING_DEFAULTS
 
 ## -- Start install --------------------------------------------
 [ ! -z "$REGISTER_URL"    ] && SECTION REGISTER_INSTALL_START

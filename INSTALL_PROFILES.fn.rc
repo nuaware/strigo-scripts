@@ -1,4 +1,13 @@
 
+# Any crucial variables not set by the INSTALL_FN_* should be set to defaults here:
+SET_MISSING_DEFAULTS() {
+    #${AAAA:-bbbb}
+    export INSTALL_KUBERNETES=${INSTALL_KUBERNETES:-0}
+    export DOWNLOAD_PCC_TWISTLOCK=${DOWNLOAD_PCC_TWISTLOCK:-0}
+    export INSTALL_PCC_TWISTLOCK=${INSTALL_PCC_TWISTLOCK:-0}
+}
+
+
 # Profile for Kubernetes+PrismaCloud Workshops:
 INSTALL_FN_K8S_PrismaCloud() {
     # MY TOOLS:
