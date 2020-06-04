@@ -2,6 +2,9 @@
 
 SCRIPT_DIR=$(dirname $0)
 
+# Take defaults on apt-get commands:
+export DEBIAN_FRONTEND=noninteractive
+
 sudo mv $(readlink -f /var/lib/cloud/instance) /root/tmp/instance/
 
 CNI_YAMLS="https://docs.projectcalico.org/manifests/calico.yaml"
@@ -446,11 +449,13 @@ EOF
 INSTALL_PRISMACLOUD() {
 
     MAX_LOOPS=10; LOOP=0;
-    while !  ls -altrh /var/nfs/general/MOUNTED_from_NODE_worker* 2>/dev/null ; do
-	echo "Waiting for worker nodes to mount NFS share ..."
-        let LOOP=LOOP+1; sleep 12; [ $LOOP -ge $MAX_LOOPS ] && die "Failed waiting for $WORKER_NODE_NAME to mount NFS share"
+    NFS_CHECK=/var/nfs/general/MOUNTED_from_NODE_worker
+
+    while !  ls -altrh ${NFS_CHECK}* 2>/dev/null ; do
+	echo "Waiting for worker nodes to mount NFS share ... ${NFS_CHECK}*"
+        let LOOP=LOOP+1; sleep 30; [ $LOOP -ge $MAX_LOOPS ] && die "Failed waiting for $WORKER_NODE_NAME to mount NFS share"
     done
-    ls -altr /var/nfs/general/MOUNTED_from_NODE_worker* | SECTION_LOG
+    ls -altr ${NFS_CHECK}* | SECTION_LOG
 
     wget -O /tmp/install_pcc.sh $INSTALL_PRISMACLOUD_SH_URL
 
@@ -509,6 +514,19 @@ REGISTER_INSTALL_END() {
     wget -qO - "$REGISTER_URL/${EVENT}_${WORKSPACE}_${NODE_NAME}_${PUBLIC_IP}_provisioning_END"
 }
 
+KUBE_RECORD_POD_STARTUP_EVENTS() {
+    #for NAME in $(kubectl get pods -n kube-system --no-headers | awk '{ print $1; }'); do kubectl describe -n kube-system pod/$NAME | sed -e "s?^Events:?Events: kube-system/$NAME?" | grep -A 10 Events: ; done
+    #for NAME in $(kubectl get pods -n $NS --no-headers | awk '{ print $1; }'); do kubectl describe -n $NS pod/$NAME | sed -e "s?^Events:?Events: $NS/$NAME?" | grep -A 10 Events: ; done
+
+    NS=kube-system
+
+    for NAME in $(kubectl get pods -n $NS --no-headers | awk '{ print $1; }'); do
+        echo
+        kubectl get pod -n $NS pod/$NAME
+        kubectl describe -n $NS pod/$NAME | sed -e "s?^Events:?Events: $NS/$NAME?" | grep -A 10 Events:
+    done | tee /tmp/${NS}.Pods.Events.log
+}
+
 INSTALL_KUBERNETES() {
     case $K8S_INSTALLER in
         "kubeadm")
@@ -517,6 +535,7 @@ INSTALL_KUBERNETES() {
             SECTION CNI_INSTALL
             SECTION KUBEADM_JOIN
             SECTION KUBECTL_VERSION
+	    SECTION KUBE_RECORD_POD_STARTUP_EVENTS
         ;;
         "rancher")
             SECTION RANCHER_INIT
@@ -532,6 +551,8 @@ SETUP_NFS() {
     NODE_TYPE=$1; shift
 
     echo "Firewall(ufw status): $( ufw status )"
+
+    NFS_CHECK_MASTER=/nfs/general/MOUNTED_from_NODE_master.txt
 
     case $NODE_TYPE in
         master)
@@ -551,7 +572,7 @@ SETUP_NFS() {
             systemctl restart nfs-kernel-server
             ln -s /var/nfs/general /nfs/
 
-	    date >> /nfs/general/MOUNTED_from_NODE_$(hostname).txt
+	    date >> $NFS_CHECK_MASTER
             df -h     /var/nfs/general | SECTION_LOG
             ls -altrh /var/nfs/general | SECTION_LOG
             ;;
@@ -560,9 +581,9 @@ SETUP_NFS() {
 
 	    mount master:/var/nfs/general /nfs/general
             MAX_LOOPS=10; LOOP=0;
-	    while [ ! -f /nfs/general/MOUNTED_from_NODE_master.txt ] ; do
-	        echo "Waiting for master node to initialize NFS share ..."
-                let LOOP=LOOP+1; sleep 12; [ $LOOP -ge $MAX_LOOPS ] && die "Failed waiting to mount share"
+	    while [ ! -f $NFS_CHECK_MASTER ] ; do
+	        echo "Waiting for master node to initialize NFS share ...  $NFS_CHECK_MASTER"
+                let LOOP=LOOP+1; sleep 30; [ $LOOP -ge $MAX_LOOPS ] && die "Failed waiting to mount share"
 	        mount master:/var/nfs/general /nfs/general
             done
 
