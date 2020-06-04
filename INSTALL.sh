@@ -440,7 +440,7 @@ EOF
     chmod +x /tmp/kubelab.sh
 }
 
-INSTALL_PCC_TWISTLOCK() {
+INSTALL_PRISMACLOUD() {
 
     MAX_LOOPS=10; LOOP=0;
     while !  ls -altrh /var/nfs/general/MOUNTED_from_NODE_worker* 2>/dev/null ; do
@@ -449,7 +449,7 @@ INSTALL_PCC_TWISTLOCK() {
     done
     ls -altr /var/nfs/general/MOUNTED_from_NODE_worker* | SECTION_LOG
 
-    wget -O /tmp/install_pcc.sh $INSTALL_PCC_SH_URL
+    wget -O /tmp/install_pcc.sh $INSTALL_PRISMACLOUD_SH_URL
 
     chmod +x /tmp/install_pcc.sh
     /tmp/install_pcc.sh --init-console
@@ -493,9 +493,9 @@ INSTALL_TERRAFORM() {
     ls -altrh $BIN/terraform | SECTION_LOG
 }
 
-DOWNLOAD_PCC_TWISTLOCK() {
-    wget -qO $PRISMA_PCC_TAR $PRISMA_PCC_URL
-    ls -altrh $PRISMA_PCC_TAR | SECTION_LOG
+DOWNLOAD_PRISMACLOUD() {
+    wget -qO $PRISMACLOUD_TAR $PRISMACLOUD_URL
+    ls -altrh $PRISMACLOUD_TAR | SECTION_LOG
 }
 
 REGISTER_INSTALL_START() {
@@ -699,8 +699,8 @@ if [ $NODE_IDX -eq 0 ] ; then
     [ $INSTALL_KUBELAB -ne 0 ]        && SECTION INSTALL_KUBELAB
     [ $INSTALL_JUPYTER -ne 0 ]        && SECTION INSTALL_JUPYTER
     SECTION SETUP_NFS master on $NODE_NAME
-    [ $DOWNLOAD_PCC_TWISTLOCK -ne 0 ] && SECTION DOWNLOAD_PCC_TWISTLOCK
-    [ $INSTALL_PCC_TWISTLOCK -ne 0 ]  && SECTION INSTALL_PCC_TWISTLOCK
+    [ $DOWNLOAD_PRISMACLOUD -ne 0 ] && SECTION DOWNLOAD_PRISMACLOUD
+    [ $INSTALL_PRISMACLOUD -ne 0 ]  && SECTION INSTALL_PRISMACLOUD
     [ $INSTALL_TERRAFORM -ne 0 ]      && SECTION INSTALL_TERRAFORM
     [ $INSTALL_HELM -ne 0 ]           && SECTION INSTALL_HELM
 else
