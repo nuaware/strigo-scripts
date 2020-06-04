@@ -48,11 +48,29 @@ def response(url):
         print(f"get({url}) ==> {ret}")
     return ret
 
-def getEvents():
+def getEvents(status=None):
     url = "https://app.strigo.io/api/v1/events"
     res = requests.get(url, headers=headers)
+    events = res.json()
+    #print(f"Filtering on events={events}")
+    if status:
+        if VERBOSE: print(f"Filtering on event status='{status}'")
+        filteredEvents = {}
+        for field in events:
+            if field != 'data':
+                filteredEvents[field] = events[field]
+        filteredEvents['data']=[]
+
+        for event in events['data']:
+            if event['status'] == status:
+                #print("MATCHED")
+                filteredEvents['data'].append(event)
+            #else:
+                #print("Skipping status='{event['status']}'")
+        return filteredEvents
+
     #print(type(res)); #print(res)
-    return res.json()
+    return events
 
 def getClasses():
     url = "https://app.strigo.io/api/v1/classes"
@@ -61,7 +79,7 @@ def getClasses():
     return res.json()
 
 def getEventClass( eventId ):
-    events = getEvents()
+    events = getEvents(status='live')
     if VERBOSE: print(f"event={json.dumps(events,  indent=2, sort_keys=True)}")
 
     for ev in events['data']:
@@ -70,7 +88,7 @@ def getEventClass( eventId ):
     return None
 
 def getMyEventField( owner_id_or_email, field='id', status='live', multiple=False ):
-    events = getEvents()
+    events = getEvents(status=status)
     if VERBOSE: print(f"event={json.dumps(events,  indent=2, sort_keys=True)}")
 
     #print(events)
