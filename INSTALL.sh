@@ -692,7 +692,8 @@ if [ $NODE_IDX -eq 0 ] ; then
     APT_INSTALL_PACKAGES+=" nfs-kernel-server"
 
     #apt-get update && apt-get install -y $APT_INSTALL_PACKAGES
-    apt-get update  && apt-get upgrade -y $APT_INSTALL_PACKAGES
+    #apt-get update  && apt-get upgrade -y $APT_INSTALL_PACKAGES
+    apt-get update  && apt-get upgrade && apt-get install -y $APT_INSTALL_PACKAGES
 
     SECTION CONFIG_NODES_ACCESS
     [ $INSTALL_KUBERNETES -ne 0 ]     && SECTION INSTALL_KUBERNETES
