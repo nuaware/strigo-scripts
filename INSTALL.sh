@@ -675,6 +675,8 @@ FINISH() {
       SSH_EACH_NODE 'echo $(hostname; df -h / | grep -v ^Filesystem)' | SECTION_LOG
       wc -l /tmp/SECTION.log*;
     } | SECTION_LOG
+
+    $CHECK_COMPLETE_FN
 }
 
 WAIT_POD_RUNNING() {

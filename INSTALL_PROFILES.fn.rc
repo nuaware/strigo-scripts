@@ -57,5 +57,19 @@ INSTALL_FN_K8S_PrismaCloud() {
         [ ! -z "$PRISMACLOUD_ACCESS" ] && echo "export PRISMACLOUD_ACCESS=$PRISMACLOUD_ACCESS" >> /root/.profile
         [ ! -z "$PRISMACLOUD_LICENSE" ] && echo "$PRISMACLOUD_LICENSE" > /tmp/PCC.license.txt
     }
+
+    export CHECK_COMPLETE_FN=CHECK_FN_K8S_PrismaCloud
+}
+
+CHECK_FN_K8S_PrismaCloud() {
+    STATE=/tmp/CLUSTER.state
+    cp /dev/null $STATE
+    {
+        echo -n "$BASH_SOURCE: "
+        kubectl get pods -A --no-headers | grep -v " Running " && { echo -n "FAIL_Pods "; }
+        kubectl get pods -n twistlock --no-headers | grep -E "twistlock-console.* Running " && { echo -n "OK_PrismaConsole "; }
+        kubectl get pods -n twistlock --no-headers | grep "twistlock-console" | grep -v " Running " && { echo -n "FAIL_PrismaConsole "; }
+        echo
+    } >> $STATE;
 }
 
