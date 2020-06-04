@@ -46,9 +46,9 @@ export PRIVATE_IP="unset"
 export PUBLIC_IP="unset"
 
 # If running in an ec2 VM: assume the case if ec2metatdata present:
-which ec2metadata 2>/dev/null && {
+which ec2metadata >/dev/null 2>&1 && {
 	# Check we're not running under WSL:
-	uname -a | grep microsoft ||
+	uname -a | grep -q microsoft ||
 	    export PRIVATE_IP=$(ec2metadata --local-ipv4) PUBLIC_IP=$(ec2metadata --public-ipv4)
 }
 
@@ -108,9 +108,9 @@ if [ "$1" = "-ssh" ]; then
 	    echo "workspace$WORKSPACE: ${IP}"
 
 	    if [ -z "$1" ]; then
-	        ssh -i $SSH_KEY ubuntu@$IP uptime
+	        ssh -qt -i $SSH_KEY ubuntu@$IP uptime
 	    else
-	        ssh -i $SSH_KEY ubuntu@$IP "$*"
+	        ssh -qt -i $SSH_KEY ubuntu@$IP "$*"
 	    fi
 	}
         #echo "LINE: $IP_INFO"
@@ -121,6 +121,5 @@ fi
 #ARGS="$VERBOSE -oem $OWNER_ID_OR_EMAIL"
 
 #$DIR/get_strigo_info.py $ARGS $*
-set -x
 $DIR/get_strigo_info.py $*
 
