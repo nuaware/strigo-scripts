@@ -10,7 +10,8 @@ POD_CIDR="192.168.0.0/16"
 SECTION_LOG=/tmp/SECTION.log
 EVENT_LOG=/root/tmp/event.log
 
-[ ! -f ${SECTION_LOG}.initial ] && [ -f $SECTION_LOG ] && cp -a $SECTION_LOG ${SECTION_LOG}.initial
+[   -f ${SECTION_LOG}         ] && cp -a $SECTION_LOG ${SECTION_LOG}.$(date +'%Y-%m-%d_%H-%M-%S')
+[ ! -f ${SECTION_LOG}.initial ] && [ -f $SECTION_LOG ] && mv $SECTION_LOG ${SECTION_LOG}.initial
 
 #export PRIVATE_IP=$(hostname -i)
 export PRIVATE_IP=$(ec2metadata --local-ipv4)
