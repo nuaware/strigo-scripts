@@ -29,8 +29,8 @@ ENABLE_JUPYTER_BASH() {
 }
 
 INSTALL_CUSTOM_CSS() {
-    CUSTOM_CSS=/home/$END_USER/.jupyter/custom
-    mkdir -p /home/$END_USER/.jupyter
+    CUSTOM_CSS=/home/$END_USER/.jupyter/custom/custom.css
+    mkdir -p /home/$END_USER/.jupyter/custom/
 
     wget -O $CUSTOM_CSS $CUSTOM_CSS_URL
     ls -al $CUSTOM_CSS
