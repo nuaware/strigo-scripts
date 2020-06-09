@@ -466,16 +466,15 @@ INSTALL_PRISMACLOUD() {
     done
     ls -altr ${NFS_CHECK}* | SECTION_LOG
 
-    wget -O /tmp/INSTALL_PRISMACLOUD.sh $INSTALL_PRISMACLOUD_SH_URL
-
-    chmod +x /tmp/INSTALL_PRISMACLOUD.sh
-
     {
         echo export PRISMA_PCC_TAR="$PRISMA_PCC_TAR";
         echo export PRISMA_PCC_ACCESS="$PRISMA_PCC_ACCESS";
     } > /root/tmp/PRISMACLOUD.vars
 
-    /tmp/INSTALL_PRISMACLOUD.sh --init-console
+    #wget -O /tmp/INSTALL_PRISMACLOUD.sh $INSTALL_PRISMACLOUD_SH_URL
+    #chmod +x /tmp/INSTALL_PRISMACLOUD.sh
+    #/tmp/INSTALL_PRISMACLOUD.sh --init-console
+    $SCRIPT_DIR/tmp/INSTALL_PRISMACLOUD.sh --init-console
 }
 
 INSTALL_HELM() {
@@ -562,7 +561,7 @@ INSTALL_KUBERNETES() {
 
 # Setup NFS share across nodes
 # - https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nfs-mount-on-ubuntu-18-04
-SETUP_NFS() {
+CONFIGURE_NFS() {
     NODE_TYPE=$1; shift
 
     echo "Firewall(ufw status): $( ufw status )"
@@ -762,9 +761,9 @@ if [ $NODE_IDX -eq 0 ] ; then
     CREATE_INSTALL_KUBELAB
     [ $INSTALL_KUBELAB -ne 0 ]        && SECTION INSTALL_KUBELAB
     [ $INSTALL_JUPYTER -ne 0 ]        && SECTION INSTALL_JUPYTER
-    SECTION SETUP_NFS master on $NODE_NAME
-    [ $DOWNLOAD_PRISMACLOUD -ne 0 ] && SECTION DOWNLOAD_PRISMACLOUD
-    [ $INSTALL_PRISMACLOUD -ne 0 ]  && SECTION INSTALL_PRISMACLOUD
+    [ $CONFIGURE_NFS   -ne 0 ]        && SECTION CONFIGURE_NFS master on $NODE_NAME
+    [ $DOWNLOAD_PRISMACLOUD -ne 0 ]   && SECTION DOWNLOAD_PRISMACLOUD
+    [ $INSTALL_PRISMACLOUD -ne 0 ]    && SECTION INSTALL_PRISMACLOUD
     [ $INSTALL_TERRAFORM -ne 0 ]      && SECTION INSTALL_TERRAFORM
     [ $INSTALL_HELM -ne 0 ]           && SECTION INSTALL_HELM
 else
@@ -782,7 +781,7 @@ else
 
     while [ ! -f /tmp/NODE_NAME ]; do sleep 5; done
     #NODE_NAME=$(cat /tmp/NODE_NAME)
-    SECTION SETUP_NFS worker on $(hostname)
+    [ $CONFIGURE_NFS -ne 0 ]          && SECTION CONFIGURE_NFS worker on $(hostname)
 fi
 
 #echo "export PS1='\u@\h:\w\$'"
