@@ -681,7 +681,7 @@ FINISH() {
       wc -l /tmp/SECTION.log*;
     } | SECTION_LOG
 
-    $CHECK_COMPLETE_FN
+    CHECK_FINISH_STATE
 }
 
 WAIT_POD_RUNNING() {
