@@ -474,7 +474,7 @@ INSTALL_PRISMACLOUD() {
     #wget -O /tmp/INSTALL_PRISMACLOUD.sh $INSTALL_PRISMACLOUD_SH_URL
     #chmod +x /tmp/INSTALL_PRISMACLOUD.sh
     #/tmp/INSTALL_PRISMACLOUD.sh --init-console
-    $SCRIPT_DIR/tmp/INSTALL_PRISMACLOUD.sh --init-console
+    $SCRIPT_DIR/INSTALL_PRISMACLOUD.sh --init-console
 }
 
 INSTALL_HELM() {
