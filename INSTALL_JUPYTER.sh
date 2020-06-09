@@ -34,6 +34,7 @@ INSTALL_CUSTOM_CSS() {
 
     wget -O $CUSTOM_CSS $CUSTOM_CSS_URL
     ls -al $CUSTOM_CSS
+    chown -R $END_USER:$END_USER /home/$END_USER/.jupyter/
 }
 
 END_USER=${USERS% *}
