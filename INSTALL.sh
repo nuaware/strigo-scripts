@@ -378,11 +378,11 @@ CHANGE_KUBELET_LIMITS() {
 }
 
 INSTALL_JUPYTER() {
-    JUPYTER_INSTALL_URL="${RAWREPO_URL}/master/install_vm_jupyter.sh "
+    JUPYTER_INSTALL_URL="${RAWREPO_URL}/master/INSTALL_JUPYTER.sh "
 
-    wget -O /tmp/install_vm_jupyter.sh $JUPYTER_INSTALL_URL
-    chmod +x /tmp/install_vm_jupyter.sh
-    /tmp/install_vm_jupyter.sh
+    wget -O /tmp/INSTALL_JUPYTER.sh $JUPYTER_INSTALL_URL
+    chmod +x /tmp/INSTALL_JUPYTER.sh
+    /tmp/INSTALL_JUPYTER.sh
 }
 
 INSTALL_KUBELAB() {
