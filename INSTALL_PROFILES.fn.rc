@@ -71,7 +71,19 @@ CHECK_FN_K8S() {
     cp /dev/null $STATE
     {
         echo -n "$BASH_SOURCE: "
-        kubectl get pods -A --no-headers | grep -v " Running "						&& { echo -n "FAIL_Pods "; }
+        # Check all Nodes Ready:
+        if kubectl get nodes --no-headers | grep -v " Ready "; then
+            echo -n "FAIL_Nodes ";
+        else
+            echo -n "OK_Nodes ";
+        fi
+        # Check all Pods Running:
+        if kubectl get pods -A --no-headers | grep -v " Running "; then
+            echo -n "FAIL_Pods ";
+        else
+            echo -n "OK_Pods ";
+        fi
+        # Check NFS status (if var set):
         [ $CONFIGURE_NFS -ne 0 ] && {
             [ $(hostname) = "master"  ] && mount | grep -q nfsd						&& { echo -n "OK_nfsd "; }
             [ $(hostname) = "master"  ] && [ -f /var/nfs/general/MOUNTED_from_NODE_worker1.txt ]	&& { echo -n "OK_nfsmnt "; }
@@ -89,9 +101,12 @@ CHECK_FN_K8S_PrismaCloud() {
 
     {
         echo -n "$BASH_SOURCE: "
+        {
         kubectl get ns twistlock									|| { echo -n "FAIL_No_twistlock_Namespace"; }
         kubectl get pods -n twistlock --no-headers | grep -E "twistlock-console.* Running "		&& { echo -n "OK_PrismaConsole "; }
         kubectl get pods -n twistlock --no-headers | grep "twistlock-console" | grep -v " Running "	&& { echo -n "FAIL_PrismaConsole "; }
+        }
+        echo
     } >> $STATE;
 }
 
