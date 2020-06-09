@@ -467,8 +467,8 @@ INSTALL_PRISMACLOUD() {
     ls -altr ${NFS_CHECK}* | SECTION_LOG
 
     {
-        echo export PRISMA_PCC_TAR="$PRISMA_PCC_TAR";
-        echo export PRISMA_PCC_ACCESS="$PRISMA_PCC_ACCESS";
+        echo export PRISMACLOUD_TAR="$PRISMACLOUD_TAR";
+        echo export PRISMACLOUD_ACCESS="$PRISMACLOUD_ACCESS";
     } > /root/tmp/PRISMACLOUD.vars
 
     #wget -O /tmp/INSTALL_PRISMACLOUD.sh $INSTALL_PRISMACLOUD_SH_URL
