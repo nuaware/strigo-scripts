@@ -747,7 +747,7 @@ SECTION START_DOCKER_plus
 
 # Perform all kubeadm operations from Master1:
 if [ $NODE_IDX -eq 0 ] ; then
-    APT_INSTALL_PACKAGES+=" nfs-kernel-server"
+    [ $CONFIGURE_NFS   -ne 0 ]        && APT_INSTALL_PACKAGES+=" nfs-kernel-server"
 
     #apt-get update && apt-get install -y $APT_INSTALL_PACKAGES
     #apt-get update  && apt-get upgrade -y $APT_INSTALL_PACKAGES
@@ -770,7 +770,7 @@ else
     let NUM_WORKERS=NUM_NODES-NUM_MASTERS
     [ $NUM_MASTERS -gt 1 ] && die "Not implemented NUM_MASTERS > 1"
 
-    APT_INSTALL_PACKAGES+=" nfs-common"
+    [ $CONFIGURE_NFS   -ne 0 ]        && APT_INSTALL_PACKAGES+=" nfs-common"
 
     #apt-get update && apt-get install -y $APT_INSTALL_PACKAGES
     #apt-get update  && apt-get upgrade -y $APT_INSTALL_PACKAGES
