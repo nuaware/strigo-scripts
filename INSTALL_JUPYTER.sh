@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CUSTOM_CSS_URL=https://raw.githubusercontent.com/mjbright/kubelab/master/custom.css
+CUSTOM_CSS_URL=${CUSTOM_CSS_URL:-https://raw.githubusercontent.com/mjbright/kubelab/master/custom.css}
 
 APT_INSTALLS() {
     #sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y tmux curl vim && sudo apt-get clean && sudo apt-get autoclean
