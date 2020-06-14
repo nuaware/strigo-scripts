@@ -198,6 +198,8 @@ KUBEADM_INIT() {
         tee /tmp/kubeadm-init.out
     #kubeadm init | tee /tmp/kubeadm-init.out
     kubectl get nodes | SECTION_LOG
+
+    [ $UNTAINT_MASTER -ne 0 ] && kubectl taint node master node-role.kubernetes.io/master:NoSchedule-
 }
 
 # Configure nodes access from master:
@@ -680,6 +682,8 @@ FINISH() {
       SSH_EACH_NODE 'echo $(hostname; df -h / | grep -v ^Filesystem)' | SECTION_LOG
       wc -l /tmp/SECTION.log*;
 
+      kubectl describe nodes | grep -iE "^(  name:|taint:)" | SECTION_LOG
+
       CHECK_FINISH_STATE
     } | SECTION_LOG
 }
@@ -758,7 +762,7 @@ if [ $NODE_IDX -eq 0 ] ; then
 
     SECTION CONFIG_NODES_ACCESS
     [ $INSTALL_KUBERNETES -ne 0 ]     && SECTION INSTALL_KUBERNETES
-    CREATE_INSTALL_KUBELAB
+    [ $INSTALL_KUBELAB -ne 0 ]        && CREATE_INSTALL_KUBELAB
     [ $INSTALL_KUBELAB -ne 0 ]        && SECTION INSTALL_KUBELAB
     [ $INSTALL_JUPYTER -ne 0 ]        && SECTION INSTALL_JUPYTER
     [ $CONFIGURE_NFS   -ne 0 ]        && SECTION CONFIGURE_NFS master on $NODE_NAME
