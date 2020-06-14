@@ -25,6 +25,7 @@ RCFILE=$1
 ## -- main: -----------------------------------------------------
 
 VARS="CLASSID ORG_ID API_KEY OWNER_ID_OR_EMAIL PRISMA_PCC_ACCESS PRISMA_PCC_LICENSE REGISTER_URL"
+#VARS="CLASSID ORG_ID API_KEY OWNER_ID_OR_EMAIL REGISTER_URL"
 
 USE_SED1() {
     CMD="sed"
@@ -70,7 +71,7 @@ USE_SED2
 
 #
 #echo
-grep __ $OP_PRIVATE && die "ERROR: variable not replaced"
+grep __ $OP_PRIVATE && die "ERROR: variable not replaced in $OP_PRIVATE"
 
 echo
 diff        $IP_TEMPLATE   $OP_PRIVATE
