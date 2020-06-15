@@ -553,6 +553,10 @@ INSTALL_KUBERNETES() {
             SECTION KUBEADM_JOIN
             SECTION KUBECTL_VERSION
 	    SECTION KUBE_RECORD_POD_STARTUP_EVENTS
+
+	    # Redo untaint at end:
+            SECTION_LOG "UNTAINT_MASTER=$UNTAINT_MASTER"
+            [ $UNTAINT_MASTER -ne 0 ] && kubectl taint node master node-role.kubernetes.io/master:NoSchedule- |& SECTION_LOG
         ;;
         "rancher")
             SECTION RANCHER_INIT
