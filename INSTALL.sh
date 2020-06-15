@@ -197,6 +197,10 @@ KUBEADM_INIT() {
             --apiserver-cert-extra-sans=$PUBLIC_IP | \
         tee /tmp/kubeadm-init.out
     #kubeadm init | tee /tmp/kubeadm-init.out
+}
+
+# To be done once .kubeconfig is configured (copied):
+KUBEADM_POST_INIT() {
     kubectl get nodes | SECTION_LOG
 
     SECTION_LOG "UNTAINT_MASTER=$UNTAINT_MASTER"
@@ -549,14 +553,11 @@ INSTALL_KUBERNETES() {
         "kubeadm")
             SECTION KUBEADM_INIT
             SECTION SETUP_KUBECONFIG
+            SECTION KUBEADM_POST_INIT
             SECTION CNI_INSTALL
             SECTION KUBEADM_JOIN
             SECTION KUBECTL_VERSION
 	    SECTION KUBE_RECORD_POD_STARTUP_EVENTS
-
-	    # Redo untaint at end:
-            SECTION_LOG "UNTAINT_MASTER=$UNTAINT_MASTER"
-            [ $UNTAINT_MASTER -ne 0 ] && kubectl taint node master node-role.kubernetes.io/master:NoSchedule- |& SECTION_LOG
         ;;
         "rancher")
             SECTION RANCHER_INIT
