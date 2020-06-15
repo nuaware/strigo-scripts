@@ -199,7 +199,8 @@ KUBEADM_INIT() {
     #kubeadm init | tee /tmp/kubeadm-init.out
     kubectl get nodes | SECTION_LOG
 
-    [ $UNTAINT_MASTER -ne 0 ] && kubectl taint node master node-role.kubernetes.io/master:NoSchedule-
+    SECTION_LOG "UNTAINT_MASTER=$UNTAINT_MASTER"
+    [ $UNTAINT_MASTER -ne 0 ] && kubectl taint node master node-role.kubernetes.io/master:NoSchedule- |& SECTION_LOG
 }
 
 # Configure nodes access from master:
