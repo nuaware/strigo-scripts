@@ -1,0 +1,17 @@
+# Creates a Pod which sleeps for 1 hour.
+#
+# But we can create a shell inside the Pod using the kubectl 'exec' sub-command
+#     kubectl exec -it alpine -- /bin/sh
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: alpine
+  name: alpine
+spec:
+  containers:
+  - image: alpine:latest
+    name: alpine
+    command: ["/bin/sleep", "3600"]
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always

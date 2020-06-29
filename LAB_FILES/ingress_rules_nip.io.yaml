@@ -1,0 +1,41 @@
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: traefik-ingress
+spec:
+  rules:
+            
+  - host: k8s-demo.test.com.52.59.199.238.nip.io
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: k8s-demo
+          servicePort: 80
+
+  - host: quiz.test.com.52.59.199.238.nip.io
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: quiz
+          servicePort: 3000
+
+  - host: survey.test.com.52.59.199.238.nip.io
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: quiz
+          servicePort: 3000
+
+  - host: vote.test.com.52.59.199.238.nip.io
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: quiz
+          servicePort: 3000
+
+         
