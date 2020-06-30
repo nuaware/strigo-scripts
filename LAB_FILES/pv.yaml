@@ -1,0 +1,16 @@
+snippet
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: twistlock-pv
+  labels:
+    type: local
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+  - ReadWriteMany
+  - ReadWriteOnce
+  hostPath:
+    path: "/nfs/general/twistlock-pv"
+
