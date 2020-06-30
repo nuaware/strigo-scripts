@@ -7,6 +7,14 @@ USER_DATA_LOG=/root/tmp/user-data.op
 
 bash -x /root/tmp/instance/user-data.txt > ${USER_DATA_LOG}.rerun 2>&1
 
+while ! `kubectl get nodes`; do
+    echo "[$(date)] Retrying install"
+    bash -x /root/tmp/instance/user-data.txt > ${USER_DATA_LOG}.rerun 2>&1
+done
+
+echo "DONE"
+
+
 
 
 
