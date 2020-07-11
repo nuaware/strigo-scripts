@@ -4,7 +4,7 @@ SCRIPT_DIR=$(dirname $0)
 
 # Detect if interactive, mark if Strigo API working:
 # Note: to test, export SIMULATE_API_FAILURE="1" in user-data
-STRIGO_API_FAILURE=0
+export STRIGO_API_FAILURE=0
 
 # Detect if interactive shell or not:
 if [ -t 0 ];then
@@ -268,7 +268,7 @@ CONFIG_NODES_ACCESS() {
     for WORKER in $(seq $NUM_WORKERS); do
         let NODE_NUM=NUM_MASTERS+WORKER-1
 
-        [ STRIGO_API_FAILURE -eq 0 ] && WORKER_IPS=$($SCRIPT_DIR/get_strigo_info.py -ips $NODE_NUM)
+        [ $STRIGO_API_FAILURE -eq 0 ] && WORKER_IPS=$($SCRIPT_DIR/get_strigo_info.py -ips $NODE_NUM)
 	[ -z "$WORKER_IPS" ] && die "[STRIGO_API_FAILURE=$STRIGO_API_FAILURE] Failed to get WORKER_IPS"
 
         WORKER_PRIVATE_IP=${WORKER_IPS%,*};
@@ -304,7 +304,7 @@ CONFIG_NODES_ACCESS() {
 	} | SECTION_LOG
         $_SSH_ROOT_IP sudo hostnamectl set-hostname $WORKER_NODE_NAME
 
-        [ STRIGO_API_FAILURE -eq 1 ] && {
+        [ $STRIGO_API_FAILURE -eq 1 ] && {
 	    echo "[STRIGO_API_FAILURE=$STRIGO_API_FAILURE] Launching RERUN_INSTALL.sh on $WORKER_NODE_NAME"
             $_SSH_ROOT_IP sudo $SCRIPT_DIR/RERUN_INSTALL.sh >/tmp/RERUN_INSTALL_${WORKER_NODE_NAME}.log 2>&1 &
 	}
