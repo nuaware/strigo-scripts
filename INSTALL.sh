@@ -31,6 +31,14 @@ export PRIVATE_IP=$(ec2metadata --local-ipv4)
 export PUBLIC_IP=$(ec2metadata --public-ipv4)
 export NODE_NAME="unset"
 
+# Add ip addresses/placeholder in /etc/hosts:
+{
+    grep -q $PRIVATE_IP /etc/hosts || echo "$PRIVATE_IP THIS_NODE"
+    grep -q $PUBLIC_IP  /etc/hosts || echo "$PUBLIC_IP THIS_NODE_pub"
+    grep -q "worker1"     || echo "#x.x.x.x worker1"
+    grep -q "worker1_pub" || echo "#x.x.x.x worker1_pub"
+} >> /etc/hosts
+
 #K8S_INSTALLER="rancher"
 #RANCHER_RKE_RELEASE="v1.0.6"
 
@@ -155,20 +163,26 @@ set_EVENT_WORKSPACE_NODES() {
             # Manually setting WORKER_IPS as calls to $SCRIPT_DIR/get_strigo_info.py are failing
             for NODE in $NODE_NUM; do
                 echo;
-		echo "Enter ip addresses of worker$NODE_NUM:"
+                NODE_NAME="worker${NODE_NUM}"
+                sed 's/#.*//' /etc/hosts | grep -q " ${NODE_NAME}"     || die "Create private ip address entry for $NODE_NAME in /etc/hosts"
+                sed 's/#.*//' /etc/hosts | grep -q " ${NODE_NAME}_pub" || die "Create public  ip address entry for $NODE_NAME in /etc/hosts"
 
-		read -p "Private IP (of form ${PRIVATE_IP%.[0-9]*}.0): " WORKER_PRIVATE_IP
+		WORKER_PRIVATE_IP=$(sed -e 's/#.*//' -e 's/ *$//' /etc/hosts | grep " ${NODE_NAME}_pub" | awk '{ print $1; exit(0); }')
+		WORKER_PUBLIC_IP=$( sed -e 's/#.*//' -e 's/ *$//' /etc/hosts | grep " ${NODE_NAME}$"    | awk '{ print $1; exit(0); }')
+
+		#echo "Enter ip addresses of worker$NODE_NUM:"
+		#read -p "Private IP (of form ${PRIVATE_IP%.[0-9]*}.0): " WORKER_PRIVATE_IP
 	        [ ! -z "$WORKER_IPS" ] && WORKER_IPS="$WORKER_IPS,"
 	        WORKER_IPS+="$WORKER_PRIVATE_IP"
-		if [ "${PRIVATE_IP%.[0-9]*}.0" != "${WORKER_PRIVATE_IP%.[0-9]*}.0" ]; then
-		    echo "Warning: ${PRIVATE_IP%.[0-9]*}.0 != ${WORKER_PRIVATE_IP%.[0-9]*}.0"
-		    echo "Press <enter> to continue (or 'q' to quit)"
-		    read _DUMMY
-		    [ "$_DUMMY" = "q" ] && exit 1
-		    [ "$_DUMMY" = "Q" ] && exit 1
-		fi
+		#if [ "${PRIVATE_IP%.[0-9]*}.0" != "${WORKER_PRIVATE_IP%.[0-9]*}.0" ]; then
+		#    echo "Warning: ${PRIVATE_IP%.[0-9]*}.0 != ${WORKER_PRIVATE_IP%.[0-9]*}.0"
+		#    echo "Press <enter> to continue (or 'q' to quit)"
+		#    read _DUMMY
+		#    [ "$_DUMMY" = "q" ] && exit 1
+		#    [ "$_DUMMY" = "Q" ] && exit 1
+		#fi
 
-		read -p "Public  IP (MAY BE of form ${PUBLIC_IP%.[0-9]*}.0): " WORKER_PUBLIC_IP
+		#read -p "Public  IP (MAY BE of form ${PUBLIC_IP%.[0-9]*}.0): " WORKER_PUBLIC_IP
 	        WORKER_IPS+=",$WORKER_PUBLIC_IP"
 
 		echo "Will launch RERUN_INSTALL.sh on worker nodes in background (from CONFIG_NODES_ACCESS())"
