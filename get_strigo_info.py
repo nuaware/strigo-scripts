@@ -21,12 +21,12 @@ def getJson(url):
     filename=f'/tmp/{FILE_CNT}.{filebase}.json'
     FILE_CNT+=1
 
-    json = requests.get(url, headers=headers).json()
-    p_json=json.dumps(json,  indent=2, sort_keys=True)
+    json_obj = requests.get(url, headers=headers).json()
+    p_json=json.dumps(json_obj,  indent=2, sort_keys=True)
 
     text=f"# URL: {url}\n{p_json}\n"
     writefile(filename, 'w', text)
-    return json
+    return json_obj
 
 def writefile(path, mode='w', text='hello world\n'):
     ofd = open(path, mode)
@@ -98,9 +98,9 @@ def getEvents(status=None):
 
 def getClasses():
     url = "https://app.strigo.io/api/v1/classes"
-    json = getJson(url)
+    json_obj = getJson(url)
     #print(type(res)); #print(res)
-    return json
+    return json_obj
 
 def getEventClass( eventId ):
     events = getEvents(status='live')
