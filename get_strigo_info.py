@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# Check syntax using:
+#   python3 -m py_compile get_strigo_info.py
+
 import os, sys
 import requests, json
 import urllib.request
@@ -9,6 +12,26 @@ from datetime import datetime
 def die(msg):
     print("die: " + msg)
     sys.exit(1)
+
+FILE_CNT=1
+
+def getJson(url):
+    global FILE_CNT
+    filebase=url.replace('http://','').replace('https://','').filename=url.replace('/','_').replace(':','_')
+    filename=f'/tmp/{FILE_CNT}.{filebase}.json'
+    FILE_CNT+=1
+
+    json = requests.get(url, headers=headers).json()
+    p_json=json.dumps(json,  indent=2, sort_keys=True)
+
+    text=f"# URL: {url}\n{p_json}\n"
+    writefile(filename, 'w', text)
+    return json
+
+def writefile(path, mode='w', text='hello world\n'):
+    ofd = open(path, mode)
+    ofd.write(text)
+    ofd.close()
 
 VERBOSE=os.getenv('VERBOSE', None)
 
@@ -52,8 +75,7 @@ def response(url):
 
 def getEvents(status=None):
     url = "https://app.strigo.io/api/v1/events"
-    res = requests.get(url, headers=headers)
-    events = res.json()
+    events = getJson(url)
     #print(f"Filtering on events={events}")
     if status:
         if VERBOSE: print(f"Filtering on event status='{status}'")
@@ -76,9 +98,9 @@ def getEvents(status=None):
 
 def getClasses():
     url = "https://app.strigo.io/api/v1/classes"
-    res = requests.get(url, headers=headers)
+    json = getJson(url)
     #print(type(res)); #print(res)
-    return res.json()
+    return json
 
 def getEventClass( eventId ):
     events = getEvents(status='live')
@@ -92,7 +114,6 @@ def getEventClass( eventId ):
 def getMyEventField( owner_id_or_email, field='id', status='live', multiple=False ):
     events = getEvents(status=status)
     if VERBOSE: print(f"event={json.dumps(events,  indent=2, sort_keys=True)}")
-
     #print(events)
 
     fields=[]
@@ -118,6 +139,11 @@ def getMyEventField( owner_id_or_email, field='id', status='live', multiple=Fals
                     if workspaceDetails[0] != None:
                         if VERBOSE: print(ev[field])
                         return ev[field]
+
+    if field == 'id':
+        if len(fields) == 0:
+            die("Failed to find myevent")
+
     return fields
 
 def getEvent( eventId ):
@@ -139,8 +165,8 @@ def getWorkspaces(eventId):
 
 def getEventWorkspaces( eventId ):
     url = f"https://app.strigo.io/api/v1/events/{eventId}/workspaces" 
-    res = requests.get(url, headers=headers)
-    return res.json()
+    res = getJson(url)
+    return res
 
 def getMyWorkSpaceDetails( eventId ):
     workspaces = getEventWorkspaces( eventId )
@@ -160,8 +186,9 @@ def getMyWorkSpaceDetails( eventId ):
         if VERBOSE: print(f"ownerId={owner_id} owner_email={owner_email}")
 
         url = f"https://app.strigo.io/api/v1/events/{eventId}/workspaces/{workspaceId}/resources"
-        workspace = requests.get(url, headers=headers).json()
+        workspace = getJson(url)
         if VERBOSE: print(f"workspace={workspace}")
+
         for lab_inst in workspace['data']:
             lab_instance_id=lab_inst['id']
             public_ip='MISSING'
@@ -233,7 +260,7 @@ def showWorkspaceDetail(ws_data, format='default', ssh_key=None):
         print(INFO)
 
     url = f"https://app.strigo.io/api/v1/events/{eventId}/workspaces/{workspaceId}/resources"
-    workspace = requests.get(url, headers=headers).json()
+    workspace = getJson(url)
     inst_no=-1
     for lab_inst in workspace['data']:
         inst_no+=1
