@@ -2,7 +2,16 @@
 
 SCRIPT_DIR=$(dirname $0)
 
-# Take defaults on apt-get commands:
+# Detect if interactive, mark if Strigo API working:
+STRIGO_API_FAILURE=0
+
+# Detect if interactive shell or not:
+if [ -t 0 ];then
+    INTERACTIVE_SHELL=1
+else
+    INTERACTIVE_SHELL=0
+fi
+# Take defaults on apt-get commands: even in interactive mode
 export DEBIAN_FRONTEND=noninteractive
 
 sudo mv $(readlink -f /var/lib/cloud/instance) /root/tmp/instance/
@@ -130,6 +139,32 @@ set_EVENT_WORKSPACE_NODES() {
     cp /dev/null $EVENT_LOG
 
     _NUM_NODES=$($SCRIPT_DIR/get_strigo_info.py -nodes | tee -a $EVENT_LOG)
+    if [ -z "$_NUM_NODES" ]; then
+        export STRIGO_API_FAILURE=1
+	echo "STRIGO_API data unavailable"
+        if [ $INTERACTIVE_SHELL -eq 1 ];then
+	    WORKER_IPS=""
+            # Manually setting WORKER_IPS as calls to $SCRIPT_DIR/get_strigo_info.py are failing
+            for NODE in $NODE_NUM; do
+                echo;
+		echo "Enter ip addresses of worker$NODE_NUM:"
+
+		read -p "Private IP (of form XXXX): " WORKER_PRIVATE_IP
+	        [ ! -z "$WORKER_IPS" ] && WORKER_IPS="$WORKER_IPS,"
+	        WORKER_IPS+="$WORKER_PRIVATE_IP"
+
+		read -p "Public  IP (of form XXXX): " WORKER_PUBLIC_IP
+	        WORKER_IPS+=",$WORKER_PUBLIC_IP"
+
+		echo "Will launch RERUN_INSTALL.sh on worker nodes in background (from CONFIG_NODES_ACCESS())"
+	    done
+        else
+            echo "Running in non-interactive shell - exiting, you need to run $SCRIPT_DIR/RERUN_INSTALL.sh"
+	    exit 1
+        fi
+        return
+    fi
+
     while [ $_NUM_NODES -lt $NUM_NODES ]; do
         echo "[ '$_NUM_NODES' -lt '$NUM_NODES' ] - waiting for more nodes to become available ..."
 	sleep 5
@@ -219,7 +254,9 @@ CONFIG_NODES_ACCESS() {
     for WORKER in $(seq $NUM_WORKERS); do
         let NODE_NUM=NUM_MASTERS+WORKER-1
 
-        WORKER_IPS=$($SCRIPT_DIR/get_strigo_info.py -ips $NODE_NUM)
+        [ STRIGO_API_FAILURE -eq 0 ] && WORKER_IPS=$($SCRIPT_DIR/get_strigo_info.py -ips $NODE_NUM)
+	[ -z "$WORKER_IPS" ] && die "[STRIGO_API_FAILURE=$STRIGO_API_FAILURE] Failed to get WORKER_IPS"
+
         WORKER_PRIVATE_IP=${WORKER_IPS%,*};
         WORKER_PUBLIC_IP=${WORKER_IPS#*,};
         WORKER_PRIVATE_IPS+=" $WORKER_PRIVATE_IP"
@@ -252,6 +289,11 @@ CONFIG_NODES_ACCESS() {
 	    echo "From   root to ubuntu@$WORKER_NODE_NAME: hostname=$($_SSH_ROOT_IP hostname)";
 	} | SECTION_LOG
         $_SSH_ROOT_IP sudo hostnamectl set-hostname $WORKER_NODE_NAME
+
+        [ STRIGO_API_FAILURE -eq 1 ] && {
+	    echo "[STRIGO_API_FAILURE=$STRIGO_API_FAILURE] Launching RERUN_INSTALL.sh on $WORKER_NODE_NAME"
+            $_SSH_ROOT_IP sudo $SCRIPT_DIR/RERUN_INSTALL.sh >/tmp/RERUN_INSTALL_${WORKER_NODE_NAME}.log 2>&1 &
+	}
     done
 
     echo; echo "-- setting up /etc/hosts"
