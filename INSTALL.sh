@@ -3,6 +3,7 @@
 SCRIPT_DIR=$(dirname $0)
 
 # Detect if interactive, mark if Strigo API working:
+# Note: to test, export SIMULATE_API_FAILURE="1" in user-data
 STRIGO_API_FAILURE=0
 
 # Detect if interactive shell or not:
@@ -139,6 +140,11 @@ set_EVENT_WORKSPACE_NODES() {
     cp /dev/null $EVENT_LOG
 
     _NUM_NODES=$($SCRIPT_DIR/get_strigo_info.py -nodes | tee -a $EVENT_LOG)
+
+    if [ "$SIMULATE_API_FAILURE" != "" ]; then
+        _NUM_NODES=""
+    fi
+
     if [ -z "$_NUM_NODES" ]; then
         export STRIGO_API_FAILURE=1
 	echo "STRIGO_API data unavailable"
