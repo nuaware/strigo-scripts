@@ -8,7 +8,9 @@ export STRIGO_API_FAILURE=0
 
 # Detect if interactive shell or not:
 if [ -t 0 ];then
+    # Interactive running on 0th (master) node
     INTERACTIVE_SHELL=1
+    [ -z "$NODE_IDX" ] && export NODE_IDX=0
 else
     INTERACTIVE_SHELL=0
 fi
@@ -162,7 +164,8 @@ set_EVENT_WORKSPACE_NODES() {
         if [ $INTERACTIVE_SHELL -eq 1 ];then
 	    WORKER_IPS=""
             # Manually setting WORKER_IPS as calls to $SCRIPT_DIR/get_strigo_info.py are failing
-            for NODE in $NODE_NUM; do
+	    let NUM_WORKERS=NUM_NODES-1
+	    for NODE_NUM in $(seq 1 $NUM_WORKERS); do
                 echo;
                 NODE_NAME="worker${NODE_NUM}"
                 sed 's/#.*//' /etc/hosts | grep -q " ${NODE_NAME}"     || die "Create private ip address entry for $NODE_NAME in /etc/hosts"
@@ -322,7 +325,10 @@ CONFIG_NODES_ACCESS() {
 
         [ $STRIGO_API_FAILURE -eq 1 ] && {
 	    echo "[STRIGO_API_FAILURE=$STRIGO_API_FAILURE] Launching RERUN_INSTALL.sh on $WORKER_NODE_NAME"
-            $_SSH_ROOT_IP sudo $SCRIPT_DIR/RERUN_INSTALL.sh >/tmp/RERUN_INSTALL_${WORKER_NODE_NAME}.log 2>&1 &
+
+	    # Setting NODE_IDX to NODE_NUM (so we know which worker node is running the script):
+	    # Unsetting STRIGO_API_FAILURE
+            $_SSH_ROOT_IP sudo STRIGO_API_FAILURE="" NODE_IDX=$NODE_NUM $SCRIPT_DIR/RERUN_INSTALL.sh >/tmp/RERUN_INSTALL_${WORKER_NODE_NAME}.log 2>&1 &
 	}
     done
 
