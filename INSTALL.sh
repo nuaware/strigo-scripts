@@ -142,6 +142,7 @@ set_EVENT_WORKSPACE_NODES() {
     _NUM_NODES=$($SCRIPT_DIR/get_strigo_info.py -nodes | tee -a $EVENT_LOG)
 
     if [ "$SIMULATE_API_FAILURE" != "" ]; then
+        echo "SIMULATE_API_FAILURE is set: so setting _NUM_NODES=''"
         _NUM_NODES=""
     fi
 
