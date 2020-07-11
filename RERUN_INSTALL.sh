@@ -11,16 +11,20 @@ USER_IS_OWNER=""
 
 TRY_RERUN() {
     bash -x /root/tmp/instance/user-data.txt > ${USER_DATA_LOG}.rerun 2>&1
-    echo "tail -3 ${USER_DATA_LOG}:"; tail -3 ${USER_DATA_LOG} | sed 's/^/    /'
+    echo "tail -30 ${USER_DATA_LOG}:"; tail -30 ${USER_DATA_LOG} | sed 's/^/    /'
+}
+
+LOOP() {
+    while ! kubectl get nodes; do
+        echo "[$(date)] Retrying install"
+        TRY_RERUN
+        sleep 5
+    done
 }
 
 TRY_RERUN
 
-while ! kubectl get nodes; do
-    echo "[$(date)] Retrying install"
-    TRY_RERUN
-    sleep 5
-done
+kubectl get nodes
 
 echo "DONE"
 
