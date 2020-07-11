@@ -17,7 +17,7 @@ FILE_CNT=1
 
 def getJson(url):
     global FILE_CNT
-    filebase=url.replace('http://','').replace('https://','').filename=url.replace('/','_').replace(':','_')
+    filebase=url.replace('http://','').replace('https://','').replace('/','_').replace(':','_')
     filename=f'/tmp/{FILE_CNT}.{filebase}.json'
     FILE_CNT+=1
 
