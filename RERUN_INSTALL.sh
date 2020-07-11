@@ -22,6 +22,18 @@ LOOP() {
     done
 }
 
+cat <<EOF
+To rerun:
+- On master node change /etc/hosts:
+  - replace THIS_NODE by master
+  - replace THIS_NODE_pub by master_pub
+- On worker1 node change /etc/hosts:
+  - replace THIS_NODE by worker1
+  - replace THIS_NODE_pub by worker1_pub
+  - Copy/paste both worker1 lines to /etc/hosts on master
+- Then run this script
+EOF
+
 TRY_RERUN
 
 kubectl get nodes
