@@ -142,6 +142,7 @@ set_EVENT_WORKSPACE_NODES() {
     if [ -z "$_NUM_NODES" ]; then
         export STRIGO_API_FAILURE=1
 	echo "STRIGO_API data unavailable"
+
         if [ $INTERACTIVE_SHELL -eq 1 ];then
 	    WORKER_IPS=""
             # Manually setting WORKER_IPS as calls to $SCRIPT_DIR/get_strigo_info.py are failing
@@ -149,11 +150,18 @@ set_EVENT_WORKSPACE_NODES() {
                 echo;
 		echo "Enter ip addresses of worker$NODE_NUM:"
 
-		read -p "Private IP (of form XXXX): " WORKER_PRIVATE_IP
+		read -p "Private IP (of form ${PRIVATE_IP%.[0-9]*}.0): " WORKER_PRIVATE_IP
 	        [ ! -z "$WORKER_IPS" ] && WORKER_IPS="$WORKER_IPS,"
 	        WORKER_IPS+="$WORKER_PRIVATE_IP"
+		if [ "${PRIVATE_IP%.[0-9]*}.0" != "${WORKER_PRIVATE_IP%.[0-9]*}.0" ]; then
+		    echo "Warning: ${PRIVATE_IP%.[0-9]*}.0 != ${WORKER_PRIVATE_IP%.[0-9]*}.0"
+		    echo "Press <enter> to continue (or 'q' to quit)"
+		    read _DUMMY
+		    [ "$_DUMMY" = "q" ] && exit 1
+		    [ "$_DUMMY" = "Q" ] && exit 1
+		fi
 
-		read -p "Public  IP (of form XXXX): " WORKER_PUBLIC_IP
+		read -p "Public  IP (MAY BE of form ${PUBLIC_IP%.[0-9]*}.0): " WORKER_PUBLIC_IP
 	        WORKER_IPS+=",$WORKER_PUBLIC_IP"
 
 		echo "Will launch RERUN_INSTALL.sh on worker nodes in background (from CONFIG_NODES_ACCESS())"
