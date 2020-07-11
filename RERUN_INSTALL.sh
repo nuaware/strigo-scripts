@@ -11,7 +11,7 @@ USER_IS_OWNER=""
 
 TRY_RERUN() {
     bash -x /root/tmp/instance/user-data.txt > ${USER_DATA_LOG}.rerun 2>&1
-    echo "tail -3 ${USER_DATA_LOG}.op:"; tail -3 ${USER_DATA_LOG}.op | sed 's/^/    /'
+    echo "tail -3 ${USER_DATA_LOG}:"; tail -3 ${USER_DATA_LOG} | sed 's/^/    /'
 }
 
 TRY_RERUN
