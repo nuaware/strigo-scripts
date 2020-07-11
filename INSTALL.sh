@@ -33,10 +33,10 @@ export NODE_NAME="unset"
 
 # Add ip addresses/placeholder in /etc/hosts:
 {
-    grep -q $PRIVATE_IP /etc/hosts || echo "$PRIVATE_IP THIS_NODE"
-    grep -q $PUBLIC_IP  /etc/hosts || echo "$PUBLIC_IP THIS_NODE_pub"
-    grep -q "worker1"     || echo "#x.x.x.x worker1"
-    grep -q "worker1_pub" || echo "#x.x.x.x worker1_pub"
+    grep -q $PRIVATE_IP   /etc/hosts || echo "$PRIVATE_IP THIS_NODE"
+    grep -q $PUBLIC_IP    /etc/hosts || echo "$PUBLIC_IP THIS_NODE_pub"
+    grep -q "worker1"     /etc/hosts || echo "#x.x.x.x worker1"
+    grep -q "worker1_pub" /etc/hosts || echo "#x.x.x.x worker1_pub"
 } >> /etc/hosts
 
 #K8S_INSTALLER="rancher"
@@ -157,6 +157,7 @@ set_EVENT_WORKSPACE_NODES() {
     if [ -z "$_NUM_NODES" ]; then
         export STRIGO_API_FAILURE=1
 	echo "STRIGO_API data unavailable"
+        USER_EMAIL="USER_EMAIL_unset"
 
         if [ $INTERACTIVE_SHELL -eq 1 ];then
 	    WORKER_IPS=""
