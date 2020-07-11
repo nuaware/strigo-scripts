@@ -9,11 +9,17 @@ USER_IS_OWNER=""
 [ "$1" = "-o" ]      && USER_IS_OWNER="1"
 [ "$1" = "--owner" ] && USER_IS_OWNER="1"
 
-bash -x /root/tmp/instance/user-data.txt > ${USER_DATA_LOG}.rerun 2>&1
+TRY_RERUN() {
+    bash -x /root/tmp/instance/user-data.txt > ${USER_DATA_LOG}.rerun 2>&1
+    echo "tail -3 ${USER_DATA_LOG}.op:"; tail -3 ${USER_DATA_LOG}.op | sed 's/^/    /'
+}
+
+TRY_RERUN
 
 while ! kubectl get nodes; do
     echo "[$(date)] Retrying install"
-    bash -x /root/tmp/instance/user-data.txt > ${USER_DATA_LOG}.rerun 2>&1
+    TRY_RERUN
+    sleep 5
 done
 
 echo "DONE"
