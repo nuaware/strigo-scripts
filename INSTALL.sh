@@ -664,7 +664,7 @@ CONFIGURE_NFS() {
             # for WIP in $WORKER_PRIVATE_IPS; do
             for WORKER in $(seq $NUM_WORKERS); do
                 WORKER_NODE_NAME="worker$WORKER"
-                grep -q $WORKER_NODE_NAME || echo "/var/nfs/general    $WORKER_NODE_NAME(rw,sync,no_subtree_check)" | tee -a /etc/exports
+                grep -q $WORKER_NODE_NAME /etc/exports || echo "/var/nfs/general    $WORKER_NODE_NAME(rw,sync,no_subtree_check)" | tee -a /etc/exports
             done
             #EACH_NODE echo '/var/nfs/general    $WORKER_NODE_NAME\(rw,sync,no_subtree_check\)' | tee -a /etc/exports
             grep '/var/nfs/general' /etc/exports | SECTION_LOG
