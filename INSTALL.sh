@@ -12,7 +12,7 @@ export STRIGO_API_FAILURE=0
 if [ -t 0 ];then
     # Interactive running on 0th (master) node
     INTERACTIVE_SHELL=1
-    [ -z "$NODE_IDX" ] && export NODE_IDX=0
+    [ -z "$OVERRIDE_NODE_IDX" ] && export NODE_IDX=0
 else
     INTERACTIVE_SHELL=0
 fi
@@ -330,8 +330,7 @@ CONFIG_NODES_ACCESS() {
 
 	    # Setting NODE_IDX to NODE_NUM (so we know which worker node is running the script):
 	    # Unsetting STRIGO_API_FAILURE
-	    XXXX
-            $_SSH_ROOT_IP sudo UNSET_API_FAILURE=1 NODE_IDX=$NODE_NUM $SCRIPT_DIR/RERUN_INSTALL.sh >/tmp/RERUN_INSTALL_${WORKER_NODE_NAME}.log 2>&1 &
+            $_SSH_ROOT_IP sudo UNSET_API_FAILURE=1 OVERRIDE_NODE_IDX=$NODE_NUM $SCRIPT_DIR/RERUN_INSTALL.sh >/tmp/RERUN_INSTALL_${WORKER_NODE_NAME}.log 2>&1 &
 	}
     done
 
