@@ -195,6 +195,7 @@ set_EVENT_WORKSPACE_NODES() {
 	    done
         else
             echo "Running in non-interactive shell - exiting, you need to run $SCRIPT_DIR/RERUN_INSTALL.sh"
+	    echo "Remember to populate master/worker public/private ip addresses first in master:/etc/hosts"
 	    exit 1
         fi
         return

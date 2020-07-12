@@ -9,6 +9,8 @@ USER_IS_OWNER=""
 [ "$1" = "-o" ]      && USER_IS_OWNER="1"
 [ "$1" = "--owner" ] && USER_IS_OWNER="1"
 
+die() { echo "$0: die - $*" >&2; exit 1; }
+
 TRY_RERUN() {
     bash -x /root/tmp/instance/user-data.txt |& tee ${USER_DATA_LOG}.rerun
     #bash -x /root/tmp/instance/user-data.txt > ${USER_DATA_LOG}.rerun 2>&1
@@ -34,6 +36,9 @@ To rerun:
   - Copy/paste both worker1 lines to /etc/hosts on master
 - Then run this script
 EOF
+
+grep -q master  /etc/hosts || die "No master  entry in /etc/hosts"
+grep -q worker1 /etc/hosts || die "No worker1 entry in /etc/hosts"
 
 TRY_RERUN
 
