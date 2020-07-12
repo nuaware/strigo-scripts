@@ -10,8 +10,9 @@ USER_IS_OWNER=""
 [ "$1" = "--owner" ] && USER_IS_OWNER="1"
 
 TRY_RERUN() {
-    bash -x /root/tmp/instance/user-data.txt > ${USER_DATA_LOG}.rerun 2>&1
-    echo "tail -30 ${USER_DATA_LOG}:"; tail -30 ${USER_DATA_LOG} | sed 's/^/    /'
+    bash -x /root/tmp/instance/user-data.txt |& tee ${USER_DATA_LOG}.rerun
+    #bash -x /root/tmp/instance/user-data.txt > ${USER_DATA_LOG}.rerun 2>&1
+    #echo "tail -30 ${USER_DATA_LOG}:"; tail -30 ${USER_DATA_LOG} | sed 's/^/    /'
 }
 
 LOOP() {
