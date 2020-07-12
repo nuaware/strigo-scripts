@@ -29,7 +29,7 @@ SET_MISSING_DEFAULTS() {
 }
 
 # Profile for Kubernetes (already installed) Workshops:
-INSTALL_FN_K8S() {
+INSTALL_FN_auto_K8S() {
     export ANSIBLE_INSTALL=1
 
     # KUBERNETES+INSTALLER VERSIONS:
@@ -48,7 +48,7 @@ INSTALL_FN_K8S() {
 }
 
 # Profile for Kubernetes (to be manually installed e.g. for LFS458) Workshops:
-INSTALL_FN_K8S_MANUAL() {
+INSTALL_FN_manual_K8S() {
 
     export ANSIBLE_INSTALL=1
 
@@ -67,7 +67,7 @@ INSTALL_FN_K8S_MANUAL() {
 }
 
 # Profile for Kubernetes+PrismaCloud Workshops with AUTOMATIC Kubernetes installation + MANUAL PrismaCloud installation:
-INSTALL_FN_K8S_MANUAL_PrismaCloud() {
+INSTALL_FN_auto_K8S_manual_PrismaCloud() {
     export ANSIBLE_INSTALL=1
 
     # KUBERNETES+INSTALLER VERSIONS:
@@ -111,7 +111,7 @@ SHOW_VARS() {
 }
 
 # Profile for Kubernetes+PrismaCloud Workshops with AUTOMATIC Kubernetes installation + MANUAL PrismaCloud installation (but AUTOMATIC for event owner)
-INSTALL_FN_K8S_OWNER_PrismaCloud() {
+INSTALL_FN_auto_K8S_manual_OWNERauto_PrismaCloud() {
 
     # No automatic PrismaCloud installation for students:
     INSTALL_FN_K8S_MANUAL_PrismaCloud
@@ -127,7 +127,7 @@ INSTALL_FN_K8S_OWNER_PrismaCloud() {
 }
 
 # Profile for Kubernetes+PrismaCloud Workshops with AUTOMATIC Kubernetes installation + MANUAL PrismaCloud installation (for everyone inc. event owner)
-INSTALL_FN_K8S_PrismaCloud() {
+INSTALL_FN_auto_K8S_manual_PrismaCloud() {
 
     # No automatic PrismaCloud installation for students:
     INSTALL_FN_K8S_MANUAL_PrismaCloud
