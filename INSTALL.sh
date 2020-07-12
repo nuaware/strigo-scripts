@@ -843,19 +843,19 @@ SECTION START_DOCKER_plus
 
 # Safer version of apt-get when locking is blocking us:
 safe_apt_get() {
-    apt-get $*
+    apt-get $*; RET=$?
 
     local _MAX_LOOP=12
-    while [ $? -ne 0 ]; do
+    while [ $RET -ne 0 ]; do
         for lock in /var/lib/dpkg/lock*; do
 	    echo "lsof $lock:"
 	    lsof $lock
 	done
 
 	sleep 10
-        apt-get $*
         let _MAX_LOOP=_MAX_LOOP-1
         [ $_MAX_LOOP -le 0 ] && { echo "Failed apt-get $* ... continuing"; return 1; }
+        apt-get $*; RET=$?
     done
     return 0
 }
