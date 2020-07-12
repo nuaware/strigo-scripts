@@ -867,9 +867,9 @@ SECTION START_DOCKER_plus
 if [ $NODE_IDX -eq 0 ] ; then
     [ $CONFIGURE_NFS   -ne 0 ]        && APT_INSTALL_PACKAGES+=" nfs-kernel-server"
 
-    #apt-get update && apt-get install -y $APT_INSTALL_PACKAGES
-    #apt-get update  && apt-get upgrade -y $APT_INSTALL_PACKAGES
-    #apt-get update  && apt-get upgrade -y && apt-get install -y $APT_INSTALL_PACKAGES
+    #safe_apt_get update && safe_apt_get install -y $APT_INSTALL_PACKAGES
+    #safe_apt_get update  && safe_apt_get upgrade -y $APT_INSTALL_PACKAGES
+    #safe_apt_get update  && safe_apt_get upgrade -y && safe_apt_get install -y $APT_INSTALL_PACKAGES
     safe_apt_get update
     safe_apt_get upgrade -y
     safe_apt_get install -y $APT_INSTALL_PACKAGES
