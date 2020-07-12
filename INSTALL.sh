@@ -827,7 +827,6 @@ safe_apt_get() {
     return 0
 }
 
-# Perform all kubeadm operations from Master1:
 ## Main START ---------------------------------------------------------------------------
 
 TIMER_START
@@ -864,6 +863,7 @@ APT_INSTALL_PACKAGES="jq zip"
 SECTION START_DOCKER_plus
 # SECTION GET_LAB_RESOURCES - CAREFUL THIS WILL EXPOSE YOUR API_KEY/ORG_ID
 
+# Perform all kubeadm operations from Master1:
 if [ $NODE_IDX -eq 0 ] ; then
     [ $CONFIGURE_NFS   -ne 0 ]        && APT_INSTALL_PACKAGES+=" nfs-kernel-server"
 
