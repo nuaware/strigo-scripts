@@ -1,5 +1,4 @@
-*PRIVATE*
-*_vars.rc
+PRIVATE/
 BACKUPS/
 scp_files.sh
 tmp.from.vm
