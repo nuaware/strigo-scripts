@@ -1,4 +1,4 @@
-
+#!/bin/bash
 
 USER_DATA_LOG=/root/tmp/user-data.op
 
