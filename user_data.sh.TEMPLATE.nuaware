@@ -4,7 +4,7 @@ DIR=/root/tmp; mkdir -p $DIR; cd $DIR
 
 __VARSFILE_RC__
 
-exec | tee $DIR/user-data.op 2>&1
+exec 2>&1 | tee $DIR/user-data.op 2>&1
 env
 
 # For testing: export PRIVATE_IP=$(ec2metadata --local-ipv4) PUBLIC_IP=$(ec2metadata --public-ipv4)
