@@ -658,11 +658,15 @@ CONFIGURE_NFS() {
 
     case $NODE_TYPE in
         master)
-	    mkdir -p /var/nfs/general /nfs
-	    chown nobody:nogroup /var/nfs/general
+            mkdir -p /var/nfs/general /nfs
+            chown nobody:nogroup /var/nfs/general
 
             # for WIP in $WORKER_PRIVATE_IPS; do
-            EACH_NODE echo '/var/nfs/general    $WORKER_NODE_NAME\(rw,sync,no_subtree_check\)' | tee -a /etc/exports
+            for WORKER in $(seq $NUM_WORKERS); do
+                WORKER_NODE_NAME="worker$WORKER"
+                grep -q $WORKER_NODE_NAME || echo "/var/nfs/general    $WORKER_NODE_NAME(rw,sync,no_subtree_check)" | tee -a /etc/exports
+            done
+            #EACH_NODE echo '/var/nfs/general    $WORKER_NODE_NAME\(rw,sync,no_subtree_check\)' | tee -a /etc/exports
             grep '/var/nfs/general' /etc/exports | SECTION_LOG
             #for WORKER in $(seq $NUM_WORKERS); do
             #    #echo "/var/nfs/general    $WIP(rw,sync,no_subtree_check)"
@@ -672,14 +676,15 @@ CONFIGURE_NFS() {
             #done | tee -a /etc/exports
 
             systemctl restart nfs-kernel-server
+            exportfs -a
             ln -s /var/nfs/general /nfs/
 
-	    date >> $NFS_CHECK_MASTER
+        date >> $NFS_CHECK_MASTER
             df -h     /var/nfs/general | SECTION_LOG
             ls -altrh /var/nfs/general | SECTION_LOG
             ;;
         *)
-	    mkdir -p /nfs/general
+            mkdir -p /nfs/general
 
 	    mount master:/var/nfs/general /nfs/general
             MAX_LOOPS=10; LOOP=0;
