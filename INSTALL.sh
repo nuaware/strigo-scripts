@@ -191,7 +191,7 @@ set_EVENT_WORKSPACE_NODES() {
 		#read -p "Public  IP (MAY BE of form ${PUBLIC_IP%.[0-9]*}.0): " WORKER_PUBLIC_IP
 	        WORKER_IPS+=",$WORKER_PUBLIC_IP"
 
-		echo "Will launch RERUN_INSTALL.sh on worker nodes in background (from CONFIG_NODES_ACCESS())"
+		echo "Will launch RERUN_INSTALL.sh on worker nodes in background (from CONFIG_NODES_ACCESS())" | SECTION_LOG
 	    done
         else
             echo "Running in non-interactive shell - exiting, you need to run $SCRIPT_DIR/RERUN_INSTALL.sh"
@@ -331,7 +331,10 @@ CONFIG_NODES_ACCESS() {
 
 	    # Setting NODE_IDX to NODE_NUM (so we know which worker node is running the script):
 	    # Unsetting STRIGO_API_FAILURE
-            $_SSH_ROOT_IP sudo UNSET_API_FAILURE=1 OVERRIDE_NODE_IDX=$NODE_NUM $SCRIPT_DIR/RERUN_INSTALL.sh >/tmp/RERUN_INSTALL_${WORKER_NODE_NAME}.log 2>&1 &
+	    RERUN_LOG=/tmp/RERUN_INSTALL_${WORKER_NODE_NAME}.log
+            CMD="$_SSH_ROOT_IP sudo UNSET_API_FAILURE=1 OVERRIDE_NODE_IDX=$NODE_NUM $SCRIPT_DIR/RERUN_INSTALL.sh"
+            echo "-- $CMD >$RERUN_LOG 2>&1 &" | SECTION_LOG
+            $CMD >$RERUN_LOG 2>&1 &
 	}
     done
 
