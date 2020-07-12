@@ -22,6 +22,10 @@ def getJson(url):
     FILE_CNT+=1
 
     json_obj = requests.get(url, headers=headers).json()
+    # NOTE: TypeError: getresponse() got an unexpected keyword argument 'buffering' error message seems to actually correspond to
+    #       ConnectionResetError: [Errno 54] Connection reset by peer
+    # i.e. possible Strigo API Server error (!)
+
     p_json=json.dumps(json_obj,  indent=2, sort_keys=True)
 
     text=f"# URL: {url}\n{p_json}\n"
