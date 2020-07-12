@@ -38,7 +38,7 @@ To rerun:
 EOF
 
 # On master:
-[ ! -z "$OVERRIDE_NODE_IDX" ] && { grep -q master  /etc/hosts || die "No master  entry in /etc/hosts"; }
+[ -z "$OVERRIDE_NODE_IDX" ] && { grep -q master  /etc/hosts || die "No master  entry in /etc/hosts"; }
 
 # On all nodes:
 grep -q worker1 /etc/hosts || die "No worker1 entry in /etc/hosts"
