@@ -808,6 +808,26 @@ WAIT_POD_RUNNING() {
     done
 }
 
+# Safer version of apt-get when locking is blocking us:
+safe_apt_get() {
+    apt-get $*; RET=$?
+
+    local _MAX_LOOP=12
+    while [ $RET -ne 0 ]; do
+        for lock in /var/lib/dpkg/lock*; do
+	    echo "lsof $lock:"
+	    lsof $lock
+	done
+
+	sleep 10
+        let _MAX_LOOP=_MAX_LOOP-1
+        [ $_MAX_LOOP -le 0 ] && { echo "Failed apt-get $* ... continuing"; return 1; }
+        apt-get $*; RET=$?
+    done
+    return 0
+}
+
+# Perform all kubeadm operations from Master1:
 ## Main START ---------------------------------------------------------------------------
 
 TIMER_START
@@ -844,26 +864,6 @@ APT_INSTALL_PACKAGES="jq zip"
 SECTION START_DOCKER_plus
 # SECTION GET_LAB_RESOURCES - CAREFUL THIS WILL EXPOSE YOUR API_KEY/ORG_ID
 
-# Safer version of apt-get when locking is blocking us:
-safe_apt_get() {
-    apt-get $*; RET=$?
-
-    local _MAX_LOOP=12
-    while [ $RET -ne 0 ]; do
-        for lock in /var/lib/dpkg/lock*; do
-	    echo "lsof $lock:"
-	    lsof $lock
-	done
-
-	sleep 10
-        let _MAX_LOOP=_MAX_LOOP-1
-        [ $_MAX_LOOP -le 0 ] && { echo "Failed apt-get $* ... continuing"; return 1; }
-        apt-get $*; RET=$?
-    done
-    return 0
-}
-
-# Perform all kubeadm operations from Master1:
 if [ $NODE_IDX -eq 0 ] ; then
     [ $CONFIGURE_NFS   -ne 0 ]        && APT_INSTALL_PACKAGES+=" nfs-kernel-server"
 
